@@ -102,7 +102,22 @@ def create_system_tray_icon():
         log_dialog = tk.Tk()
         log_dialog.title("Log Messages")
         log_text = tk.Text(log_dialog)
-        log_text.pack()
+        
+        log_dialog.geometry("800x600")  # Set the size of the dialog
+
+        log_frame = tk.Frame(log_dialog)
+        log_frame.pack(fill=tk.BOTH, expand=True)
+
+        log_text = tk.Text(log_frame, wrap=tk.WORD)
+        log_text.pack(fill=tk.BOTH, expand=True)
+
+        scrollbar = tk.Scrollbar(log_frame)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+        log_text.config(yscrollcommand=scrollbar.set)
+        scrollbar.config(command=log_text.yview)
+
+
 
         update_log()  # Update the log when the dialog is shown
         log_dialog.mainloop()
