@@ -29,6 +29,18 @@ Run the script, and a system tray icon will appear. Right-click on the icon to a
 ### Log
 You can view the log of the script's actions by clicking the "Show Log" option in the system tray menu.
 
+## `How to Configure the config.json?`
+`"payload":` You need to find your payload values. These are the values that your browser sends when you try to login with your credentials. To find that:
+
+- When you're in the login page, open Developer Tools, press F12 or Ctrl + Shift + I (or Cmd + Option + I on Mac) to open the Developer Tools. Alternatively, you can right-click anywhere on the page and select "Inspect" or "Inspect Element."
+- Navigate to the Network Tab: In the Developer Tools, click on the "Network" tab at the top.
+- Trigger the POST Request: Now, you need perform the action that sends the POST request you want to inspect **(Try to login with incorrect password)**. The network tab will capture all network requests made by the page, including the POST request.
+- Locate the POST Request: Look for the specific POST request in the list of network requests. It will typically have a method of "POST" and the URL it was sent to. Click on the POST request to select it.
+- Inspect the POST Data: In the right-hand pane, you will see various tabs. Click on the "Headers" tab.
+In the "Headers" section, you can find a "Form Data" or "Request Payload" section that displays the data being sent with the POST request. This is where you can see your POST payload.
+
+`"url":` This is **NOT** the base URL of the login page. You can find this URL from the same page that you find your payload. It is called "Request URL:", in the "Headers" tab.
+
 ## Dependencies
 The script uses various Python libraries, including requests for making HTTP requests, pystray for creating the system tray icon, and tkinter for the log window. Make sure you have all the required libraries.
 
