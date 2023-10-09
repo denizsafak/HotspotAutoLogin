@@ -1,6 +1,8 @@
 # HotspotAutoLogin Wi-Fi / Hotspot Auto Login Script (Automate WEB Logins)
 HotspotAutoLogin is a Python script designed to automate the login process for public Wi-Fi or hotspot networks that require web-based authentication. This script is intended for situations where you often connect to networks that require a web login, such as public hotspots in cafes, hotels, or airports. The script continuously monitors your network connection and automatically logs you in when necessary.
 
+![Example Log.](/examples/Log.png)
+
 ## `How It Works`
 ### Network Monitoring
 The script will continuously monitor your network connection. When you connect to the specified SSID but there is no internet access, it will attempt to log in automatically.
@@ -26,6 +28,7 @@ You can view the log of the script's actions by clicking the "Show Log" option i
 
 ## `How to Configure the config.json?`
 `"payload":` You need to find your own payload values. These are the values that your browser sends when you try to login with your credentials. For example username, phone number, password... To find that:
+![Example Payload.](/examples/Payload.png)
 
 - When you're in the login page, open your browser's Developer Tools, press F12 or Ctrl + Shift + I (or Cmd + Option + I on Mac) to open the Developer Tools. Alternatively, you can right-click anywhere on the page and select "Inspect" or "Inspect Element."
 - **Navigate to the Network Tab:** In the Developer Tools, click on the "Network" tab at the top.
@@ -35,10 +38,15 @@ You can view the log of the script's actions by clicking the "Show Log" option i
 In the "Payload" tab, you can find your form data or request payload that displays the data being sent with the POST request. This is where you can see your POST payload. You need to enter the same payload values to config.json.
 
 `"url":` **DO NOT USE HTTPS, USE HTTP.** This is **NOT** the base URL of the login page. You can find this URL from the same page that you find your payload. It is called "Request URL", in the "Headers" tab. For example: "**http**://site.com/auth"
+![Example Request.](/examples/Request.png)
 
 `"ssid":` This is your network's SSID. For example "MyHome_5G"
 
 `"check_every_second":` The frequency of the script for checking your internet connection status. For example "100", it will try to access the internet every 100 seconds.
+
+> Example useage:
+> 
+> ![Example config.ini.](/examples/config.png)
 
 ## Dependencies
 The script uses various Python libraries, including requests for making HTTP requests, pystray for creating the system tray icon, and tkinter for the log window. Make sure you have all the required libraries.
