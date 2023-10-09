@@ -129,7 +129,17 @@ def check_network_status():
                 save_to_file(message)
 
                 # Semd the request and ignore SSL errors
-                response = requests.post(url, data=json.dumps(payload), headers=headers, verify=False)
+                try:
+                    response = requests.post(url, data=json.dumps(payload), headers=headers, verify=False)
+                except requests.exceptions.RequestException as e:
+                    # Catch the exception and add a delay before trying again
+                    errorcount += 1
+                    sleepcount = 10
+                    message = "Failed to send request: {e}".format(e=e)+" Trying again in "+str(sleepcount)+" seconds... (Errors: "+str(errorcount)+"/10)"
+                    add_to_log(message)
+                    save_to_file(message)
+                    time.sleep(sleepcount)
+                    continue
 
                 # Check the response status code
                 if response.status_code == 200:
