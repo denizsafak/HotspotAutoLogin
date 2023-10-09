@@ -73,56 +73,70 @@ def exit_application(icon, item):
     os._exit(0)
 
 # Queue to store log messages
-log_messages = deque(maxlen=10)
+log_messages = deque(maxlen=20)
+log_dialog = None
+log_text = None
 
-# Function to add a message to the log
-def add_to_log(message):
-    now = datetime.now()
-    timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
-    log_messages.append(f"({timestamp}) {message}")
-    update_log()  # Update the log after adding a message
+# Function to exit the application
+def exit_application(icon, item):
+    if log_dialog:
+        log_dialog.destroy()
+    icon.stop()
+    os._exit(0)
 
 # Function to update the log
 def update_log():
-    if 'log_text' in globals():  # Check if the log dialog is open
-        log_text.delete(1.0, tk.END)  # Clear the existing log
+    if log_text:
+        log_text.delete(1.0, tk.END)
         for message in get_last_log_messages():
             log_text.insert(tk.END, message + "\n")
 
+# Function to add a message to the log
+def add_to_log(message):
+    global log_messages
+    now = datetime.now()
+    timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
+    log_messages.append(f"({timestamp}) {message}")
+    update_log()
+
 # Function to get the last log messages
 def get_last_log_messages():
+    global log_messages
     return list(log_messages)
 
-# Create the system tray icon
-def create_system_tray_icon():
-    image = Image.open("icon.png")  # Replace "icon.png" with your own icon image
-
-    def show_log_dialog(icon, item):
-        global log_dialog, log_text  # Make these variables global so they can be accessed in update_log
+# Function to show the log dialog
+def show_log_dialog(icon, item):
+    global log_dialog, log_text
+    if log_dialog:
+        log_dialog.deiconify()
+        update_log()
+    else:
         log_dialog = tk.Tk()
         log_dialog.title("Log Messages")
         log_text = tk.Text(log_dialog)
-        
-        log_dialog.geometry("800x600")  # Set the size of the dialog
-
+        log_dialog.geometry("1024x500")
         log_frame = tk.Frame(log_dialog)
         log_frame.pack(fill=tk.BOTH, expand=True)
-
         log_text = tk.Text(log_frame, wrap=tk.WORD)
         log_text.pack(fill=tk.BOTH, expand=True)
-
-        scrollbar = tk.Scrollbar(log_frame)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-
-        log_text.config(yscrollcommand=scrollbar.set)
-        scrollbar.config(command=log_text.yview)
-
-
-
-        update_log()  # Update the log when the dialog is shown
+        update_log()
+        log_dialog.protocol("WM_DELETE_WINDOW", hide_log_dialog)
         log_dialog.mainloop()
 
-    menu = pystray.Menu(pystray.MenuItem('Show Log', show_log_dialog), pystray.MenuItem('Exit', exit_application))
+# Function to hide the log dialog
+def hide_log_dialog():
+    global log_dialog
+    if log_dialog:
+        log_dialog.withdraw()
+
+# Create the system tray icon
+def create_system_tray_icon():
+    image = Image.open("icon.png")
+
+    menu = pystray.Menu(
+        pystray.MenuItem('Show Log', show_log_dialog),
+        pystray.MenuItem('Exit', exit_application)
+    )
     icon = pystray.Icon("my_icon", image, "WIFI Autologin", menu)
     icon.run()
 
@@ -186,19 +200,11 @@ def check_network_status():
     os._exit(0)
 
 if __name__ == '__main__':
+    
     # Create a thread for the system tray icon
     tray_thread = threading.Thread(target=create_system_tray_icon)
+    tray_thread.daemon = True  # Set as a daemon thread so it exits when the main program exits
     tray_thread.start()
-
-    # Initialize the tkinter GUI in the main thread
-    root = tk.Tk()
-    root.withdraw()  # Hide the main tkinter window
-
-    # Create a log dialog
-    log_dialog = tk.Tk()
-    log_dialog.title("Log Messages")
-    log_text = tk.Text(log_dialog)
-    log_text.pack()
 
     # Start the network status checking in the main thread
     check_network_status()
