@@ -1,0 +1,12 @@
+{
+    "payload": {
+        "gsmNo": {
+            "localGsmNo": "username",
+            "gsmNoCountry": "country"
+        },
+        "password": "password"
+    },
+    "url": "http://website.com/api/portal/dynamic/authenticate",
+    "ssid": "YOUR SSID",
+    "check_every_second": 100
+}
