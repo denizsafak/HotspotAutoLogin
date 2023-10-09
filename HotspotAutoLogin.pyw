@@ -165,5 +165,15 @@ if __name__ == '__main__':
     tray_thread = threading.Thread(target=create_system_tray_icon)
     tray_thread.start()
 
+    # Initialize the tkinter GUI in the main thread
+    root = tk.Tk()
+    root.withdraw()  # Hide the main tkinter window
+
+    # Create a log dialog
+    log_dialog = tk.Tk()
+    log_dialog.title("Log Messages")
+    log_text = tk.Text(log_dialog)
+    log_text.pack()
+
     # Start the network status checking in the main thread
     check_network_status()
