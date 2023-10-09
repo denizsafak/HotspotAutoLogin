@@ -46,7 +46,7 @@ In the "Payload" tab, you can find your form data or request payload that displa
 
 > Example useage:
 > 
-> ![Example config.ini.](/examples/config.png)
+> ![Example config.ini.](/examples/Config.png)
 
 ## Dependencies
 The script uses various Python libraries, including requests for making HTTP requests, pystray for creating the system tray icon, and tkinter for the log window. Make sure you have all the required libraries.
