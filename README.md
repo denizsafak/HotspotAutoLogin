@@ -34,7 +34,7 @@ You can view the log of the script's actions by clicking the "Show Log" option i
 - Inspect the POST Data: In the right-hand pane, you will see various tabs. Click on the "Payload" tab.
 In the "Payload" section, you can find your form data or request payload that displays the data being sent with the POST request. This is where you can see your POST payload.
 
-`"url":` This is **NOT** the base URL of the login page. You can find this URL from the same page that you find your payload. It is called "Request URL", in the "Headers" tab.
+`"url":` **DO NOT USE HTTPS, USE HTTP.** This is **NOT** the base URL of the login page. You can find this URL from the same page that you find your payload. It is called "Request URL", in the "Headers" tab. For example: "**http**://site.com/auth"
 
 `"ssid":` This is your network's SSID. For example "MyHome_5G"
 
