@@ -14,11 +14,6 @@ If you are connected to the correct SSID but lack internet access, the script at
 ### Logging
 Any important events or actions taken by the script are logged both in a log file (log.txt) and in the log window that can be accessed via the system tray icon.
 
-### Exit Gracefully
-If the script encounters too many login failures (10 consecutive errors), it will exit gracefully.
-
-
-
 ## `Usage` 
 ### Configuration
 Edit the config.json file with your specific information, including your login credentials, the portal URL, the SSID of the network you want to connect to, and the check interval in seconds.
@@ -36,8 +31,8 @@ You can view the log of the script's actions by clicking the "Show Log" option i
 - Navigate to the Network Tab: In the Developer Tools, click on the "Network" tab at the top.
 - Trigger the POST Request: Now, you need perform the action that sends the POST request you want to inspect **(Try to login with incorrect password)**. The network tab will capture all network requests made by the page, including the POST request.
 - Locate the POST Request: Look for the specific POST request in the list of network requests. It will typically have a method of "POST" and the URL it was sent to. Click on the POST request to select it.
-- Inspect the POST Data: In the right-hand pane, you will see various tabs. Click on the "Headers" tab.
-In the "Headers" section, you can find a "Form Data" or "Request Payload" section that displays the data being sent with the POST request. This is where you can see your POST payload.
+- Inspect the POST Data: In the right-hand pane, you will see various tabs. Click on the "Payload" tab.
+In the "Payload" section, you can find your form data or request payload that displays the data being sent with the POST request. This is where you can see your POST payload.
 
 `"url":` This is **NOT** the base URL of the login page. You can find this URL from the same page that you find your payload. It is called "Request URL", in the "Headers" tab.
 
