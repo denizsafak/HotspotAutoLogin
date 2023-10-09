@@ -31,14 +31,14 @@ You can view the log of the script's actions by clicking the "Show Log" option i
 
 ## `How to Configure the config.json?`
 `"payload":` You need to find your own payload values. These are the values that your browser sends when you try to login with your credentials. For example username, phone number, password... To find that:
-![Example Payload.](/examples/Payload.png)
-
 - When you're in the login page, open your browser's Developer Tools, press F12 or Ctrl + Shift + I (or Cmd + Option + I on Mac) to open the Developer Tools. Alternatively, you can right-click anywhere on the page and select "Inspect" or "Inspect Element."
 - **Navigate to the Network Tab:** In the Developer Tools, click on the "Network" tab at the top.
 - **Trigger the POST Request:** Perform the action that sends the POST request. **(Try to login with incorrect password)**. The network tab will capture all network requests made by the page, including the POST request.
 - **Locate the POST Request:** Look for the specific POST request in the list of network requests. It will typically have a method of "POST" and the URL it was sent to. Click on the POST request to select it.
 - **Inspect the POST Data:** In the right-hand pane, you will see various tabs. Click on the "Payload" tab.
 In the "Payload" tab, you can find your form data or request payload that displays the data being sent with the POST request. This is where you can see your POST payload. You need to enter the same payload values to config.json.
+
+![Example Payload.](/examples/Payload.png)
 
 `"url":` **DO NOT USE HTTPS, USE HTTP.** This is **NOT** the base URL of the login page. You can find this URL from the same page that you find your payload. It is called "Request URL", in the "Headers" tab. For example: "**http**://site.com/auth"
 ![Example Request.](/examples/Request.png)
@@ -47,7 +47,7 @@ In the "Payload" tab, you can find your form data or request payload that displa
 
 `"check_every_second":` The frequency of the script for checking your internet connection status. For example "100", it will try to access the internet every 100 seconds.
 
-> Example useage:
+> ## Example useage:
 > 
 > ![Example config.ini.](/examples/Config.png)
 
