@@ -9,7 +9,15 @@ import tkinter as tk
 from collections import deque
 from datetime import datetime
 import os
-import socket
+from urllib3.exceptions import InsecureRequestWarning
+requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
+requests.packages.urllib3.util.ssl_.DEFAULT_CIPHERS += 'HIGH:!DH:!aNULL'
+
+try:
+    requests.packages.urllib3.contrib.pyopenssl.DEFAULT_SSL_CIPHER_LIST += 'HIGH:!DH:!aNULL'
+except AttributeError:
+    # no pyopenssl support used / needed / available
+    pass
 
 # Load configuration from file
 with open("config.json", "r") as f:
@@ -24,11 +32,11 @@ expected_ssid = config["ssid"].lower()
 
 def is_internet_available():
     try:
-        # Attempt to resolve a common internet domain (e.g., google.com)
-        host = socket.gethostbyname("www.google.com")
-        # If successful, it means the internet is available
-        return True
-    except socket.error:
+        # Try to send a simple HTTP GET request to a known website
+        response = requests.get("https://www.google.com")
+        # If the request was successful, it means the internet is available
+        return response.status_code == 200
+    except requests.ConnectionError:
         # If an exception is raised, there's no internet connectivity
         return False
 
@@ -156,7 +164,6 @@ def check_network_status():
                 message = "Connected to "+config["ssid"]+", but internet connection is down. Running the script..."
                 add_to_log(message)
                 save_to_file(message)
-
                 # Semd the request and ignore SSL errors
                 try:
                     response = requests.post(url, data=json.dumps(payload), headers=headers, verify=False)
@@ -185,9 +192,8 @@ def check_network_status():
                     add_to_log(message)
                     save_to_file(message)
         else:
-            errorcount += 1
             sleepcount = 10  # Sleep ... seconds before trying again
-            message = "Not connected to "+config["ssid"]+" Checking again in "+str(sleepcount)+" seconds... (Errors: "+str(errorcount)+"/10)"
+            message = "Not connected to "+config["ssid"]+" Checking again in "+str(sleepcount)+" seconds..."
             add_to_log(message)
             save_to_file(message)
 
