@@ -1,12 +1,9 @@
 {
     "payload": {
-        "gsmNo": {
-            "localGsmNo": "username",
-            "gsmNoCountry": "country"
-        },
-        "password": "password"
+		"username": "PLEASE WRITE YOUR OWN PAYLOAD VALUES HERE. THIS IS AN EXAMPLE",
+        "password": "PLEASE WRITE YOUR OWN PAYLOAD VALUES HERE. THIS IS AN EXAMPLE"
     },
-    "url": "http://website.com/api/portal/dynamic/authenticate",
-    "ssid": "YOUR SSID",
-    "check_every_second": 100
+    "url": "https://example.com/api/portal/dynamic/authenticate",
+    "ssid": "WRITE YOUR SSID HERE",
+    "check_every_second": 120
 }
