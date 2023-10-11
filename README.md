@@ -1,5 +1,5 @@
 # HotspotAutoLogin Wi-Fi/Hotspot Autologin Script (Automate WEB Logins)
-HotspotAutoLogin is a script that designed to automate the login process for public Wi-Fi or hotspot networks that require web-based authentication. This script is intended for situations where you often connect to networks that require a web login, such as public hotspots in cafes, hotels, or airports. The script continuously monitors your network connection and automatically logs you in when necessary.
+HotspotAutoLogin is a script that designed to automate the login process for Wi-Fi or hotspot networks that require web-based authentication. This script is intended for situations where you often connect to networks that require a web login, such as public hotspots in cafes, hotels, or airports. The script continuously monitors your network connection and automatically logs you in when necessary.
 
 > # [Download the Latest Executable (.exe) Release](../../releases)
 > You can download the executable (.exe) version of the same script, making it easy to use without the need to install Python or other libraries.
@@ -10,7 +10,7 @@ HotspotAutoLogin is a script that designed to automate the login process for pub
 ### Network Monitoring
 The script will continuously monitor your network connection. When you connect to the specified SSID but there is no internet access, it will attempt to log in automatically.
 
-### Auto Login
+### Autologin
 If you are connected to the correct SSID but lack internet access, the script attempts to log in by sending an POST request to the provided URL with the specified credentials. If the login is successful (status code 200), the script will continue monitoring.
 
 ### Logging
@@ -23,7 +23,7 @@ The script reads its configuration from a config.json file. This file contains t
 
 > [!IMPORTANT] 
 > ### Python Requirements
-> If you are running it **directly with Python**, you need to install this specific library:  
+> If you are running it **directly with Python**, you need to install all the libraries that's used in the script and you need to install this specific library:
 > ```
 > python -m pip install requests "urllib3<2"
 > ```
@@ -39,7 +39,7 @@ When you run the script, a system tray icon will appear. Right-click on the icon
 You can view the log of the script's actions by clicking the "Show Log" option in the system tray menu.
 
 ## `How to Configure the config.json?`
-`"payload":` You need to find your own payload values. These are the values that your browser sends when you try to login with your credentials. For example username, phone number, password... To find that:
+`"payload":` You need to find your own payload values. These are the values that your browser sends when you try to login with your credentials. For example username, phone number, password, etc. To find that:
 - When you're in the login page, open your browser's Developer Tools, press F12 or Ctrl + Shift + I (or Cmd + Option + I on Mac) to open the Developer Tools. Alternatively, you can right-click anywhere on the page and select "Inspect" or "Inspect Element."
 - **Navigate to the Network Tab:** In the Developer Tools, click on the "Network" tab at the top.
 - **Trigger the POST Request:** Perform the action that sends the POST request. **(Try to login with incorrect password)**. The network tab will capture all network requests made by the page, including the POST request.
@@ -58,14 +58,14 @@ In the "Payload" tab, you can find your form data or request payload that displa
 
 > ## Example useage:
 > 
-> ![Example config.ini.](/examples/config.png)
+![Example Request.](/examples/config.png)
 
 ## Dependencies
 The script uses various Python libraries, including requests for making POST requests, pystray for creating the system tray icon, and tkinter for the log window. Make sure you have all the required libraries.
 
-## Notes
-- The script relies on the assumption that the web portal uses basic authentication. If the portal uses a more complex login mechanism, additional adjustments may be necessary.
-- This script is primarily intended for Windows. Adaptations might be needed for other operating systems.
+> [!NOTE]
+> - The script relies on the assumption that the web portal uses basic authentication. If the portal uses a more complex login mechanism, additional adjustments may be necessary.
+> - This script is primarily intended for Windows. Adaptations might be needed for other operating systems.
 
 ## Disclaimer
 > Use this script responsibly and only on networks where you have the right to access and use the provided services. Unauthorized access to networks is illegal and unethical.
