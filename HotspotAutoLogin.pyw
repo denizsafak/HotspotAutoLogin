@@ -1,14 +1,14 @@
 import json
+import os
 import requests
 import time
 import subprocess
 import pystray
-from PIL import Image
 import threading
 import tkinter as tk
+from PIL import Image
 from collections import deque
 from datetime import datetime
-import os
 from urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 requests.packages.urllib3.util.ssl_.DEFAULT_CIPHERS += 'HIGH:!DH:!aNULL'
@@ -56,7 +56,9 @@ def get_connected_wifi_ssid():
         return None
 
 headers = {
-    "Content-Type": "application/json"
+    "Content-Type": "application/json;charset=UTF-8",
+    "Connection": "keep-alive",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
 }
 
 # Function to add a message to the log file (txt)
@@ -145,7 +147,7 @@ def create_system_tray_icon():
         pystray.MenuItem('Show Log', show_log_dialog),
         pystray.MenuItem('Exit', exit_application)
     )
-    icon = pystray.Icon("my_icon", image, "WIFI Autologin", menu)
+    icon = pystray.Icon("my_icon", image, "HotspotAutoLogin", menu)
     icon.run()
 
 # Function to check network status
@@ -158,44 +160,46 @@ def check_network_status():
             if is_internet_available():
                 errorcount = 0
                 sleepcount = config["check_every_second"]
-                message = "Connected to "+config["ssid"]+" and internet connection is available. Checking again in "+str(sleepcount)+" seconds..."
+                message = "Connected to " + config["ssid"] + " and internet connection is available. Checking again in " + str(sleepcount) + " seconds..."
                 add_to_log(message)
             else:
-                message = "Connected to "+config["ssid"]+", but internet connection is down. Running the script..."
+                message = "Connected to " + config["ssid"] + ", but internet connection is down. Running the script..."
                 add_to_log(message)
                 save_to_file(message)
-                # Semd the request and ignore SSL errors
+
+                # Send the request and handle potential errors
                 try:
-                    response = requests.post(url, data=json.dumps(payload), headers=headers, verify=False)
+                    response = requests.post(url, data=json.dumps(payload), headers=headers, verify=False, timeout=10, allow_redirects=True)
+
+                    # Check the response status code
+                    if response.status_code == 200:
+                        # Success!
+                        errorcount = 0
+                        sleepcount = config["check_every_second"]
+                        message = "Request was successful. Connection established! Checking again in " + str(sleepcount) + " seconds..."
+                        add_to_log(message)
+                        save_to_file(message)
+                    else:
+                        errorcount += 1
+                        sleepcount = 10  # Sleep ... seconds before trying again
+                        message = "Request failed with status code: {}. Trying again in {} seconds... (Errors: {}/10)".format(response.status_code, sleepcount, errorcount)
+                        add_to_log(message)
+                        save_to_file(message)
                 except requests.exceptions.RequestException as e:
                     # Catch the exception and add a delay before trying again
                     errorcount += 1
                     sleepcount = 10
-                    message = "Failed to send request: {e}".format(e=e)+" Trying again in "+str(sleepcount)+" seconds... (Errors: "+str(errorcount)+"/10)"
+                    message = "Failed to send request: {}. Trying again in {} seconds... (Errors: {}/10)".format(e, sleepcount, errorcount)
                     add_to_log(message)
                     save_to_file(message)
                     time.sleep(sleepcount)
                     continue
-
-                # Check the response status code
-                if response.status_code == 200:
-                    # Success!
-                    errorcount = 0
-                    sleepcount = config["check_every_second"]
-                    message = "Request was successful. Connection established! Checking again in "+str(sleepcount)+" seconds..."
-                    add_to_log(message)
-                    save_to_file(message)
-                else:
-                    errorcount += 1
-                    sleepcount = 10  # Sleep ... seconds before trying again
-                    message = "Request failed with status code: {}".format(response.status_code)+" Trying again in "+str(sleepcount)+" seconds... (Errors: "+str(errorcount)+"/10)"
-                    add_to_log(message)
-                    save_to_file(message)
         else:
             sleepcount = 10  # Sleep ... seconds before trying again
-            message = "Not connected to "+config["ssid"]+" Checking again in "+str(sleepcount)+" seconds..."
+            message = "Not connected to {}. Checking again in {} seconds...".format(config["ssid"], sleepcount)
             add_to_log(message)
             save_to_file(message)
+            time.sleep(sleepcount)
 
         time.sleep(sleepcount)  # Sleep ... seconds before trying again
 
