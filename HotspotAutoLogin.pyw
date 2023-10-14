@@ -40,18 +40,33 @@ def is_internet_available():
         # If an exception is raised, there's no internet connectivity
         return False
 
-# Function to get the currently connected WiFi SSID using system commands (for Windows)
-def get_connected_wifi_ssid():
+# Function to get the currently connected SSID using system commands (for Windows)
+def get_connected_network():
     try:
         startupinfo = subprocess.STARTUPINFO()
         startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-        output = subprocess.check_output(["netsh", "wlan", "show", "interfaces"], startupinfo=startupinfo).decode("utf-8")
-        lines = output.split("\n")
-        for line in lines:
+
+        # Get Wi-Fi SSID
+        wifi_output = subprocess.check_output(["netsh", "wlan", "show", "interfaces"], startupinfo=startupinfo).decode("utf-8")
+        wifi_lines = wifi_output.split("\n")
+        wifi_ssid = None
+        for line in wifi_lines:
             if "SSID" in line:
-                ssid = line.strip().split(": ")[1]
-                return ssid
-        return None
+                wifi_ssid = line.strip().split(": ")[1]
+                break
+
+        if wifi_ssid is not None:
+            return wifi_ssid
+        elif wifi_ssid is None:
+            # Check if connected to Ethernet
+            ethernet_output = subprocess.check_output(["netsh", "interface", "show", "interface"], startupinfo=startupinfo).decode("utf-8")
+            ethernet_lines = ethernet_output.split("\n")
+            for line in ethernet_lines:
+                if "Connected" in line:
+                    if "Ethernet" in line:
+                        return "Ethernet Network"
+        else:
+            return None
     except subprocess.CalledProcessError:
         return None
 
@@ -155,8 +170,8 @@ def check_network_status():
     errorcount = 0
     sleepcount = config["check_every_second"]
     while running and errorcount < 10:
-        connected_ssid = get_connected_wifi_ssid()
-        if connected_ssid and connected_ssid.lower() == expected_ssid:
+        connected_ssid = get_connected_network()
+        if connected_ssid.lower() == expected_ssid or connected_ssid == "Ethernet Network":
             if is_internet_available():
                 errorcount = 0
                 sleepcount = config["check_every_second"]
