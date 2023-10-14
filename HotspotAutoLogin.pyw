@@ -190,8 +190,8 @@ def check_network_status():
                     if response.status_code == 200:
                         # Success!
                         errorcount = 0
-                        sleepcount = config["check_every_second"]
-                        message = "Request was successful. Connection established! Checking again in " + str(sleepcount) + " seconds..."
+                        sleepcount = 10
+                        message = "Request was successful. Connection established! Checking the internet connection in " + str(sleepcount) + " seconds..."
                         add_to_log(message)
                         save_to_file(message)
                     else:
