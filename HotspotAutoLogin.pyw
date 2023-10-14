@@ -11,29 +11,24 @@ from collections import deque
 from datetime import datetime
 from urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
-requests.packages.urllib3.util.ssl_.DEFAULT_CIPHERS += 'HIGH:!DH:!aNULL'
-
-try:
-    requests.packages.urllib3.contrib.pyopenssl.DEFAULT_SSL_CIPHER_LIST += 'HIGH:!DH:!aNULL'
-except AttributeError:
-    # no pyopenssl support used / needed / available
-    pass
 
 # Load configuration from file
 with open("config.json", "r") as f:
     config = json.load(f)
 
-# Your authentication payload and URL
+# Your payload
 payload = config["payload"]
 url = config["url"]
-
-# Convert the expected SSID to lowercase (or uppercase)
-expected_ssid = config["ssid"].lower()
+if (config["ssid"]):
+    expected_ssid = config["ssid"].lower()
+else:
+    config["ssid"] = "Wi-Fi"
+    expected_ssid = config["ssid"]
 
 def is_internet_available():
     try:
         # Try to send a simple HTTP GET request to a known website
-        response = requests.get("https://www.google.com")
+        response = requests.get("https://www.google.com", timeout=10)
         # If the request was successful, it means the internet is available
         return response.status_code == 200
     except requests.ConnectionError:
@@ -64,7 +59,7 @@ def get_connected_network():
             for line in ethernet_lines:
                 if "Connected" in line:
                     if "Ethernet" in line:
-                        return "Ethernet Network"
+                        return "ethernet"
         else:
             return None
     except subprocess.CalledProcessError:
@@ -88,14 +83,6 @@ def save_to_file(message):
     # Open the file in append mode and write the formatted message
     with open("log.txt", "a") as f:
         f.write(formatted_message)
-
-# Flag to control the main loop
-running = True
-
-# Function to gracefully exit the application
-def exit_application(icon, item):
-    icon.stop()
-    os._exit(0)
 
 # Queue to store log messages
 log_messages = deque(maxlen=20)
@@ -130,36 +117,43 @@ def get_last_log_messages():
     return list(log_messages)
 
 # Function to show the log dialog
-def show_log_dialog(icon, item):
-    global log_dialog, log_text
-    if log_dialog:
-        log_dialog.deiconify()
-        update_log()
+log_dialog_open = False
+def show_log_dialog():
+    global log_dialog, log_text, log_dialog_open
+    if log_dialog_open == False:
+        log_dialog_open = True
+        if log_dialog:
+            log_dialog.deiconify()
+            update_log()
+        else:
+            log_dialog = tk.Tk()
+            log_dialog.title("Log Messages")
+            log_text = tk.Text(log_dialog)
+            log_dialog.geometry("1024x500")
+            log_frame = tk.Frame(log_dialog)
+            log_frame.pack(fill=tk.BOTH, expand=True)
+            log_text = tk.Text(log_frame, wrap=tk.WORD)
+            log_text.pack(fill=tk.BOTH, expand=True)
+            update_log()
+            log_dialog.protocol("WM_DELETE_WINDOW", hide_log_dialog)
+            log_dialog.mainloop()
     else:
-        log_dialog = tk.Tk()
-        log_dialog.title("Log Messages")
-        log_text = tk.Text(log_dialog)
-        log_dialog.geometry("1024x500")
-        log_frame = tk.Frame(log_dialog)
-        log_frame.pack(fill=tk.BOTH, expand=True)
-        log_text = tk.Text(log_frame, wrap=tk.WORD)
-        log_text.pack(fill=tk.BOTH, expand=True)
-        update_log()
-        log_dialog.protocol("WM_DELETE_WINDOW", hide_log_dialog)
-        log_dialog.mainloop()
+        hide_log_dialog()
 
 # Function to hide the log dialog
 def hide_log_dialog():
-    global log_dialog
+    global log_dialog, log_dialog_open
+    log_dialog_open = False
     if log_dialog:
         log_dialog.withdraw()
+        log_dialog = None
 
 # Create the system tray icon
 def create_system_tray_icon():
     image = Image.open("icon.png")
 
     menu = pystray.Menu(
-        pystray.MenuItem('Show Log', show_log_dialog),
+        pystray.MenuItem('Show Log', show_log_dialog, default=True),
         pystray.MenuItem('Exit', exit_application)
     )
     icon = pystray.Icon("my_icon", image, "HotspotAutoLogin", menu)
@@ -167,27 +161,38 @@ def create_system_tray_icon():
 
 # Function to check network status
 def check_network_status():
+    running = True
     errorcount = 0
     sleepcount = config["check_every_second"]
     while running and errorcount < 10:
         connected_ssid = get_connected_network()
-        if connected_ssid.lower() == expected_ssid or connected_ssid == "Ethernet Network":
+        if (connected_ssid):
+            connected_ssid = connected_ssid.lower()
+        if (connected_ssid == expected_ssid) or (connected_ssid == "ethernet"):
             if is_internet_available():
                 errorcount = 0
                 sleepcount = config["check_every_second"]
                 message = "Connected to " + config["ssid"] + " and internet connection is available. Checking again in " + str(sleepcount) + " seconds..."
                 add_to_log(message)
             else:
-                message = "Connected to " + config["ssid"] + ", but internet connection is down. Running the script..."
+                sleepcount = 3
+                message = "Connected to {} but internet is down. Sending the request in {} seconds...".format(config["ssid"], sleepcount)
                 add_to_log(message)
                 save_to_file(message)
-
+                # Update SSL cipher list
+                try:
+                    requests.packages.urllib3.util.ssl_.DEFAULT_CIPHERS += 'HIGH:!DH:!aNULL'
+                except AttributeError as e:
+                    # no pyopenssl support used / needed / available
+                    add_to_log("Error when adding to DEFAULT_CIPHERS: {}".format(e))
+                    save_to_file("Error when adding to DEFAULT_CIPHERS: {}".format(e))
+                    pass
+                time.sleep(sleepcount)
                 # Send the request and handle potential errors
                 try:
                     response = requests.post(url, data=json.dumps(payload), headers=headers, verify=False, timeout=10, allow_redirects=True)
-
                     # Check the response status code
-                    if response.status_code == 200:
+                    if response.ok:
                         # Success!
                         errorcount = 0
                         sleepcount = 10
@@ -211,10 +216,9 @@ def check_network_status():
                     continue
         else:
             sleepcount = 10  # Sleep ... seconds before trying again
-            message = "Not connected to {}. Checking again in {} seconds...".format(config["ssid"], sleepcount)
+            message = "Not connected to target {} or Ethernet. Checking again in {} seconds...".format(config["ssid"], sleepcount)
             add_to_log(message)
             save_to_file(message)
-            time.sleep(sleepcount)
 
         time.sleep(sleepcount)  # Sleep ... seconds before trying again
 
@@ -222,7 +226,12 @@ def check_network_status():
     add_to_log(message)
     save_to_file(message)
     time.sleep(5)
+    running = False
     os._exit(0)
+
+def open_log_dialog_thread():
+    log_thread = threading.Thread(target=show_log_dialog)
+    log_thread.start()
 
 if __name__ == '__main__':
     
@@ -230,6 +239,9 @@ if __name__ == '__main__':
     tray_thread = threading.Thread(target=create_system_tray_icon)
     tray_thread.daemon = True  # Set as a daemon thread so it exits when the main program exits
     tray_thread.start()
+    
+    # Open Log Messages at startup
+    open_log_dialog_thread()
 
     # Start the network status checking in the main thread
     check_network_status()
