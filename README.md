@@ -1,4 +1,4 @@
-# HotspotAutoLogin Wi-Fi/Hotspot Autologin Script (Automate WEB Logins)
+# HotspotAutoLogin: Wi-Fi/Hotspot Autologin Script (Automate WEB Logins)
 
 ![Example Log.](/examples/Logs.png)
 
