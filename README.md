@@ -54,6 +54,8 @@ In the "Payload" tab, you can find your form data or request payload that displa
 ![Example Request.](/examples/Request.png)
 
 `"ssid":` This is your network's SSID. For example "MyHome_5G"
+> [!NOTE]
+> **If you are using a wired (ethernet) connection, you don't need to enter ssid. You can leave it blank.**
 
 `"check_every_second":` The frequency of the script for checking your internet connection status. For example "100", it will try to access the internet every 100 seconds.
 
