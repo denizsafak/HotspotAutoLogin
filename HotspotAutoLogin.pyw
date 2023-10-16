@@ -1,3 +1,17 @@
+import logging, sys, traceback
+
+# Log all errors to a log.txt file
+def log_exception(exctype, value, tb):
+    logging.exception("Uncaught exception: {0}".format(str(value)))
+    logging.exception("Traceback: {0}".format(''.join(traceback.format_tb(tb))))
+    logging.shutdown()
+    sys.exit(1)
+
+sys.excepthook = log_exception
+
+# Log all messages except DEBUG to a log.txt file
+logging.basicConfig(filename='log.txt', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
 import json
 import os
 import requests
@@ -20,19 +34,20 @@ with open("config.json", "r") as f:
 payload = config["payload"]
 url = config["url"]
 if (config["ssid"]):
-    expected_ssid = config["ssid"].lower()
+    expected_ssid = config["ssid"]
+    expected_ssid_lower = config["ssid"].lower()
 else:
     config["ssid"] = "Wi-Fi"
     expected_ssid = config["ssid"]
+    expected_ssid_lower = None
 
 def is_internet_available():
     try:
         # Try to send a simple HTTP GET request to a known website
         response = requests.get("https://www.google.com", timeout=10)
         # If the request was successful, it means the internet is available
-        return response.status_code == 200
-    except requests.ConnectionError:
-        # If an exception is raised, there's no internet connectivity
+        return True
+    except (requests.ConnectionError, requests.RequestException):
         return False
 
 # Function to get the currently connected SSID using system commands (for Windows)
@@ -59,11 +74,11 @@ def get_connected_network():
             for line in ethernet_lines:
                 if "Connected" in line:
                     if "Ethernet" in line:
-                        return "ethernet"
+                        return "Ethernet"
         else:
-            return None
+            return False
     except subprocess.CalledProcessError:
-        return None
+        return False
 
 headers = {
     "Content-Type": "application/json;charset=UTF-8",
@@ -76,10 +91,8 @@ def save_to_file(message):
     # Get the current date and time
     now = datetime.now()
     timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
-
     # Format the message with the timestamp
     formatted_message = f"({timestamp}) {message}\n"
-
     # Open the file in append mode and write the formatted message
     with open("log.txt", "a") as f:
         f.write(formatted_message)
@@ -160,37 +173,43 @@ def create_system_tray_icon():
     icon.run()
 
 # Function to check network status
+running = True
+errorcount = 0
+sleepcount = config["check_every_second"]
+connected_ssid_lower = None
 def check_network_status():
-    running = True
-    errorcount = 0
-    sleepcount = config["check_every_second"]
+    global running, errorcount, sleepcount, connected_ssid_lower
     while running and errorcount < 10:
         connected_ssid = get_connected_network()
         if (connected_ssid):
-            connected_ssid = connected_ssid.lower()
-        if (connected_ssid == expected_ssid) or (connected_ssid == "ethernet"):
-            if is_internet_available():
-                errorcount = 0
+            connected_ssid_lower = connected_ssid.lower()
+        if (connected_ssid) and ((connected_ssid_lower == expected_ssid_lower) or (connected_ssid == "Ethernet")):
+            if (is_internet_available()):
                 sleepcount = config["check_every_second"]
-                message = "Connected to " + config["ssid"] + " and internet connection is available. Checking again in " + str(sleepcount) + " seconds..."
+                message = "Connected to {} and internet connection is available. Checking again in {} seconds...".format(connected_ssid, str(sleepcount))
+                errorcount = 0
                 add_to_log(message)
             else:
                 sleepcount = 3
-                message = "Connected to {} but internet is down. Sending the request in {} seconds...".format(config["ssid"], sleepcount)
+                time.sleep(sleepcount)
+                message = "Connected to {} but internet is down. Sending the request in {} seconds...".format(connected_ssid, str(sleepcount))
                 add_to_log(message)
                 save_to_file(message)
-                # Update SSL cipher list
-                try:
-                    requests.packages.urllib3.util.ssl_.DEFAULT_CIPHERS += 'HIGH:!DH:!aNULL'
-                except AttributeError as e:
-                    # no pyopenssl support used / needed / available
-                    add_to_log("Error when adding to DEFAULT_CIPHERS: {}".format(e))
-                    save_to_file("Error when adding to DEFAULT_CIPHERS: {}".format(e))
-                    pass
-                time.sleep(sleepcount)
                 # Send the request and handle potential errors
                 try:
-                    response = requests.post(url, data=json.dumps(payload), headers=headers, verify=False, timeout=10, allow_redirects=True)
+                    # Update SSL cipher list
+                    try:
+                        requests.packages.urllib3.util.ssl_.DEFAULT_CIPHERS += 'HIGH:!DH:!aNULL'
+                    except AttributeError as e:
+                        # no pyopenssl support used / needed / available
+                        add_to_log("Error when adding to DEFAULT_CIPHERS: {}".format(e))
+                        save_to_file("Error when adding to DEFAULT_CIPHERS: {}".format(e))
+                        pass
+                    time.sleep(1)
+                    response = requests.post(url, data=json.dumps(payload), headers=headers, verify=False, timeout=10)
+                    message = "Request sent."
+                    add_to_log(message)
+                    save_to_file(message)
                     # Check the response status code
                     if response.ok:
                         # Success!
@@ -202,21 +221,21 @@ def check_network_status():
                     else:
                         errorcount += 1
                         sleepcount = 10  # Sleep ... seconds before trying again
-                        message = "Request failed with status code: {}. Trying again in {} seconds... (Errors: {}/10)".format(response.status_code, sleepcount, errorcount)
+                        message = "Request failed with status code: {}. Trying again in {} seconds... (Errors: {}/10)".format(response.status_code, str(sleepcount), errorcount)
                         add_to_log(message)
                         save_to_file(message)
                 except requests.exceptions.RequestException as e:
                     # Catch the exception and add a delay before trying again
                     errorcount += 1
                     sleepcount = 10
-                    message = "Failed to send request: {}. Trying again in {} seconds... (Errors: {}/10)".format(e, sleepcount, errorcount)
+                    message = "Failed to send request: {}. Trying again in {} seconds... (Errors: {}/10)".format(e, str(sleepcount), str(errorcount))
                     add_to_log(message)
                     save_to_file(message)
                     time.sleep(sleepcount)
                     continue
         else:
             sleepcount = 10  # Sleep ... seconds before trying again
-            message = "Not connected to target {} or Ethernet. Checking again in {} seconds...".format(config["ssid"], sleepcount)
+            message = "Not connected to target {} or any Ethernet. Checking again in {} seconds...".format(expected_ssid, str(sleepcount))
             add_to_log(message)
             save_to_file(message)
 
@@ -235,13 +254,22 @@ def open_log_dialog_thread():
 
 if __name__ == '__main__':
     
+    # Create a Tkinter window to run the main loop
+    root = tk.Tk()
+
     # Create a thread for the system tray icon
     tray_thread = threading.Thread(target=create_system_tray_icon)
-    tray_thread.daemon = True  # Set as a daemon thread so it exits when the main program exits
+    tray_thread.daemon = True
     tray_thread.start()
-    
+
     # Open Log Messages at startup
     open_log_dialog_thread()
 
     # Start the network status checking in the main thread
     check_network_status()
+
+    # Start the Tkinter main loop
+    root.mainloop()
+
+    # Wait for all threads to finish
+    tray_thread.join()
