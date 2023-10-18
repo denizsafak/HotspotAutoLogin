@@ -1,17 +1,3 @@
-import logging, sys, traceback
-
-# Log all errors to a log.txt file
-def log_exception(exctype, value, tb):
-    logging.exception("Uncaught exception: {0}".format(str(value)))
-    logging.exception("Traceback: {0}".format(''.join(traceback.format_tb(tb))))
-    logging.shutdown()
-    sys.exit(1)
-
-sys.excepthook = log_exception
-
-# Log all messages except DEBUG to a log.txt file
-logging.basicConfig(filename='log.txt', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-
 import json
 import os
 import requests
@@ -41,13 +27,20 @@ else:
     expected_ssid = config["ssid"]
     expected_ssid_lower = None
 
+headers = {
+    "Content-Type": "application/json;charset=UTF-8",
+    "Connection": "keep-alive",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
+}
+
+# Function to check if internet is available
 def is_internet_available():
     try:
         # Try to send a simple HTTP GET request to a known website
         response = requests.get("https://www.google.com", timeout=10)
-        # If the request was successful, it means the internet is available
-        return True
-    except (requests.ConnectionError, requests.RequestException):
+        # If the response status code is 200, it means the internet is available
+        return response.status_code == 200
+    except requests.RequestException as e:
         return False
 
 # Function to get the currently connected SSID using system commands (for Windows)
@@ -55,7 +48,6 @@ def get_connected_network():
     try:
         startupinfo = subprocess.STARTUPINFO()
         startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-
         # Get Wi-Fi SSID
         wifi_output = subprocess.check_output(["netsh", "wlan", "show", "interfaces"], startupinfo=startupinfo).decode("utf-8")
         wifi_lines = wifi_output.split("\n")
@@ -64,7 +56,6 @@ def get_connected_network():
             if "SSID" in line:
                 wifi_ssid = line.strip().split(": ")[1]
                 break
-
         if wifi_ssid is not None:
             return wifi_ssid
         elif wifi_ssid is None:
@@ -79,58 +70,19 @@ def get_connected_network():
             return False
     except subprocess.CalledProcessError:
         return False
-
-headers = {
-    "Content-Type": "application/json;charset=UTF-8",
-    "Connection": "keep-alive",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
-}
-
-# Function to add a message to the log file (txt)
-def save_to_file(message):
-    # Get the current date and time
-    now = datetime.now()
-    timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
-    # Format the message with the timestamp
-    formatted_message = f"({timestamp}) {message}\n"
-    # Open the file in append mode and write the formatted message
-    with open("log.txt", "a") as f:
-        f.write(formatted_message)
+    
+# Function to exit the application
+def exit_application(icon, item):
+    icon.stop()
+    os._exit(0)
 
 # Queue to store log messages
 log_messages = deque(maxlen=20)
 log_dialog = None
 log_text = None
-
-# Function to exit the application
-def exit_application(icon, item):
-    if log_dialog:
-        log_dialog.destroy()
-    icon.stop()
-    os._exit(0)
-
-# Function to update the log
-def update_log():
-    if log_text:
-        log_text.delete(1.0, tk.END)
-        for message in get_last_log_messages():
-            log_text.insert(tk.END, message + "\n")
-
-# Function to add a message to the log
-def add_to_log(message):
-    global log_messages
-    now = datetime.now()
-    timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
-    log_messages.append(f"({timestamp}) {message}")
-    update_log()
-
-# Function to get the last log messages
-def get_last_log_messages():
-    global log_messages
-    return list(log_messages)
+log_dialog_open = False
 
 # Function to show the log dialog
-log_dialog_open = False
 def show_log_dialog():
     global log_dialog, log_text, log_dialog_open
     if log_dialog_open == False:
@@ -155,16 +107,47 @@ def show_log_dialog():
 
 # Function to hide the log dialog
 def hide_log_dialog():
-    global log_dialog, log_dialog_open
+    global log_dialog, log_text, log_dialog_open
     log_dialog_open = False
     if log_dialog:
         log_dialog.withdraw()
         log_dialog = None
+        log_text = None
+
+# Function to get the last log messages
+def get_last_log_messages():
+    global log_messages
+    return list(log_messages)
+
+# Function to update the log
+def update_log():
+    if log_text:
+        log_text.delete(1.0, tk.END)
+        for message in get_last_log_messages():
+            log_text.insert(tk.END, message + "\n")
+
+# Function to add a message to the log
+def add_to_log(message):
+    global log_messages
+    now = datetime.now()
+    timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
+    log_messages.append(f"({timestamp}) {message}")
+    update_log()
+
+# Function to add a message to the log file (txt)
+def save_to_file(message):
+    # Get the current date and time
+    now = datetime.now()
+    timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
+    # Format the message with the timestamp
+    formatted_message = f"({timestamp}) {message}\n"
+    # Open the file in append mode and write the formatted message
+    with open("log.txt", "a") as f:
+        f.write(formatted_message)
 
 # Create the system tray icon
 def create_system_tray_icon():
     image = Image.open("icon.png")
-
     menu = pystray.Menu(
         pystray.MenuItem('Show Log', show_log_dialog, default=True),
         pystray.MenuItem('Exit', exit_application)
@@ -191,10 +174,10 @@ def check_network_status():
                 add_to_log(message)
             else:
                 sleepcount = 3
-                time.sleep(sleepcount)
                 message = "Connected to {} but internet is down. Sending the request in {} seconds...".format(connected_ssid, str(sleepcount))
                 add_to_log(message)
                 save_to_file(message)
+                time.sleep(sleepcount)
                 # Send the request and handle potential errors
                 try:
                     # Update SSL cipher list
@@ -205,11 +188,7 @@ def check_network_status():
                         add_to_log("Error when adding to DEFAULT_CIPHERS: {}".format(e))
                         save_to_file("Error when adding to DEFAULT_CIPHERS: {}".format(e))
                         pass
-                    time.sleep(1)
                     response = requests.post(url, data=json.dumps(payload), headers=headers, verify=False, timeout=10)
-                    message = "Request sent."
-                    add_to_log(message)
-                    save_to_file(message)
                     # Check the response status code
                     if response.ok:
                         # Success!
@@ -222,6 +201,7 @@ def check_network_status():
                         errorcount += 1
                         sleepcount = 10  # Sleep ... seconds before trying again
                         message = "Request failed with status code: {}. Trying again in {} seconds... (Errors: {}/10)".format(response.status_code, str(sleepcount), errorcount)
+                        # Print the response message
                         add_to_log(message)
                         save_to_file(message)
                 except requests.exceptions.RequestException as e:
@@ -248,28 +228,17 @@ def check_network_status():
     running = False
     os._exit(0)
 
-def open_log_dialog_thread():
-    log_thread = threading.Thread(target=show_log_dialog)
-    log_thread.start()
-
 if __name__ == '__main__':
-    
-    # Create a Tkinter window to run the main loop
-    root = tk.Tk()
-
     # Create a thread for the system tray icon
     tray_thread = threading.Thread(target=create_system_tray_icon)
-    tray_thread.daemon = True
     tray_thread.start()
 
     # Open Log Messages at startup
-    open_log_dialog_thread()
+    open_log_messages_startup = threading.Thread(target=show_log_dialog)
+    open_log_messages_startup.start()
 
     # Start the network status checking in the main thread
     check_network_status()
-
-    # Start the Tkinter main loop
-    root.mainloop()
 
     # Wait for all threads to finish
     tray_thread.join()
