@@ -232,13 +232,10 @@ if __name__ == '__main__':
     # Create a thread for the system tray icon
     tray_thread = threading.Thread(target=create_system_tray_icon)
     tray_thread.start()
-
     # Open Log Messages at startup
     open_log_messages_startup = threading.Thread(target=show_log_dialog)
     open_log_messages_startup.start()
-
     # Start the network status checking in the main thread
     check_network_status()
-
     # Wait for all threads to finish
     tray_thread.join()
