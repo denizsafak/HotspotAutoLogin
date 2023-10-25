@@ -33,13 +33,19 @@ headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
 }
 
+# Function to send the request
+def send_request():
+    response = requests.post(url, json.dumps(payload), headers=headers, timeout=10)
+    response.raise_for_status()  # Check for HTTP errors
+    return response
+
 # Function to check if internet is available
 def is_internet_available():
     try:
         # Try to send a simple HTTP GET request to a known website
         response = requests.get("https://www.google.com", timeout=10)
         # If the response status code is 200, it means the internet is available
-        return response.status_code == 200
+        return True
     except requests.RequestException as e:
         return False
 
@@ -188,10 +194,9 @@ def check_network_status():
                         add_to_log("Error when adding to DEFAULT_CIPHERS: {}".format(e))
                         save_to_file("Error when adding to DEFAULT_CIPHERS: {}".format(e))
                         pass
-                    response = requests.post(url, data=json.dumps(payload), headers=headers, verify=False, timeout=10)
-                    # Check the response status code
+                    # Function to send request
+                    response = send_request()
                     if response.ok:
-                        # Success!
                         errorcount = 0
                         sleepcount = 10
                         message = "Request was successful. Connection established! Checking the internet connection in " + str(sleepcount) + " seconds..."
@@ -204,6 +209,8 @@ def check_network_status():
                         # Print the response message
                         add_to_log(message)
                         save_to_file(message)
+                    # Check the response status code
+                    
                 except requests.exceptions.RequestException as e:
                     # Catch the exception and add a delay before trying again
                     errorcount += 1
@@ -232,10 +239,13 @@ if __name__ == '__main__':
     # Create a thread for the system tray icon
     tray_thread = threading.Thread(target=create_system_tray_icon)
     tray_thread.start()
+
     # Open Log Messages at startup
     open_log_messages_startup = threading.Thread(target=show_log_dialog)
     open_log_messages_startup.start()
+
     # Start the network status checking in the main thread
     check_network_status()
+
     # Wait for all threads to finish
     tray_thread.join()
