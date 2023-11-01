@@ -1,52 +1,196 @@
 import json
 import os
 import requests
+import socket
 import time
 import subprocess
 import pystray
 import threading
 import tkinter as tk
+from tkinter import Text, Scrollbar
 from PIL import Image
 from collections import deque
 from datetime import datetime
 from urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
+# Function to center a window on the screen
+def center_window(window, width, height):
+    screen_width = window.winfo_screenwidth()
+    screen_height = window.winfo_screenheight()
+    x = (screen_width - width) // 2
+    y = (screen_height - height) // 2
+    window.geometry(f"{width}x{height}+{x}+{y}")
+
+def select_profile():
+    global selected_profile
+    selected_index = listbox.curselection()
+    
+    if selected_index:
+        selected_index = int(selected_index[0])
+        selected_profile = profiles[selected_index]
+        root.destroy()
+
+# Define a function to update the profile details
+def update_profile_details(event):
+    selected_index = listbox.curselection()
+    if selected_index:
+        selected_index = int(selected_index[0])
+        selected_profile = profiles[selected_index]
+        profile_name.config(text=f"Selected Profile: {selected_profile['name']}")
+        profile_details.config(state=tk.NORMAL)
+        profile_details.delete(1.0, tk.END)
+        
+        # Insert profile details with all variables except "name"WWWW
+        profile_details.tag_configure("bold", font=("Courier New", 10, "bold"), foreground="#08872a")
+        for key, value in selected_profile.items():
+            if key != 'name':  # Skip displaying the "name" variable
+                profile_details.insert(tk.END, f"{key}: ", "bold")
+                profile_details.insert(tk.END, f"{value}\n")
+        
+        profile_details.config(state=tk.DISABLED)
+    else:
+        reset_profile_details()
+
+def reset_profile_details():
+    profile_name.config(text="Selected Profile: ")
+    profile_details.config(state=tk.NORMAL)
+    profile_details.delete(1.0, tk.END)
+    profile_details.config(state=tk.DISABLED)
+
 # Load configuration from file
 with open("config.json", "r") as f:
     config = json.load(f)
 
-# Your payload
-payload = config["payload"]
-url = config["url"]
-if (config["ssid"]):
-    expected_ssid = config["ssid"]
-    expected_ssid_lower = config["ssid"].lower()
-else:
-    config["ssid"] = "Wi-Fi"
-    expected_ssid = config["ssid"]
-    expected_ssid_lower = None
+# Get the list of profiles
+profiles = config.get("profiles", [])
 
-headers = {
-    "Content-Type": "application/json;charset=UTF-8",
-    "Connection": "keep-alive",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
-}
+# Create the main window
+root = tk.Tk()
+root.title("Profile Selection")
 
+# Set a maximum size for the window
+width = 850
+height = 300
+root.minsize(width, height)  # Adjust the values as needed
+center_window(root, width, height)
+
+# Create a frame for listing profiles
+profiles_frame = tk.Frame(root)
+profiles_frame.pack(side=tk.LEFT, fill=tk.Y, padx=10, pady=10)
+
+# Create a listbox to display available profiles
+listbox = tk.Listbox(profiles_frame, selectmode=tk.SINGLE)
+listbox.pack(side=tk.LEFT, fill=tk.Y)
+
+for profile in profiles:
+    listbox.insert(tk.END, profile['name'])
+
+# Create a vertical scrollbar for the listbox
+scrollbar = tk.Scrollbar(profiles_frame, orient=tk.VERTICAL)
+scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+# Link the listbox and scrollbar
+listbox.config(yscrollcommand=scrollbar.set)
+scrollbar.config(command=listbox.yview)
+
+# Bind the listbox selection event to update the profile details
+listbox.bind('<<ListboxSelect>>', update_profile_details)
+
+# Create a frame for displaying profile details
+details_frame = tk.Frame(root)
+details_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=10, pady=10)
+
+# Create a label for the selected profile name
+profile_name = tk.Label(details_frame, text="Selected Profile: ", anchor="w")
+profile_name.pack(fill="x", pady=(0, 5))
+
+# Create a Text widget for displaying profile details with a fixed height and scrollbars
+profile_details = Text(details_frame, wrap=tk.WORD, height=10, state=tk.DISABLED, exportselection=False)
+profile_details.pack(fill="both", expand=True)
+
+# Create a vertical scrollbar for the profile details Text widget
+profile_scrollbar = Scrollbar(profile_details, command=profile_details.yview)
+profile_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+# Link the profile details Text widget and scrollbar
+profile_details.config(yscrollcommand=profile_scrollbar.set)
+
+# Function to exit the application
+def on_closing():
+    root.destroy()
+    os._exit(0)
+
+root.protocol("WM_DELETE_WINDOW", on_closing)
+
+# Create the "Select" button
+select_button = tk.Button(
+    details_frame,
+    text="Run",
+    command=select_profile,
+    padx=10,
+    pady=10,
+    fg="white",
+    bg="#08872a",
+    activebackground="#076921",
+    activeforeground="white",
+    relief=tk.RAISED,
+    borderwidth=2,
+)
+select_button.pack(fill="x", pady=(10, 0))
+
+# Start with no profile selected
+selected_profile = None
+
+# Select the first profile by default
+if profiles:
+    selected_profile = profiles[0]
+    listbox.select_set(0)  # Highlight the first item in the list
+    update_profile_details(None)  # Update the profile details
+
+root.mainloop()
+
+# Access the selected profile's data after the window closes
+if selected_profile:
+    payload = selected_profile.get('payload')
+    url = selected_profile.get('url', "")
+    ssid = selected_profile.get('ssid', "")
+    check_every_second = selected_profile.get('check_every_second', "")
+    dialog_geometry = selected_profile.get('dialog_geometry', "")
+    headers = selected_profile.get('headers', "")
+
+    if ssid:
+        expected_ssid = ssid
+        expected_ssid_lower = expected_ssid.lower()
+    else:
+        ssid = "Ethernet"
+        expected_ssid = ssid
+        expected_ssid_lower = None
+
+# Function to check if the URL is valid
+def check_url():
+    try:
+        socket.gethostbyname(url)
+        return True
+    except Exception:
+        return False
+
+session = requests.Session()
 # Function to send the request
 def send_request():
-    response = requests.post(url, json.dumps(payload), headers=headers, timeout=10)
+    response = session.post(url, json.dumps(payload), headers=headers, allow_redirects=True, timeout=5)
     response.raise_for_status()  # Check for HTTP errors
+    print(response.text)
     return response
 
 # Function to check if internet is available
 def is_internet_available():
     try:
         # Try to send a simple HTTP GET request to a known website
-        response = requests.get("https://www.google.com", timeout=10)
-        # If the response status code is 200, it means the internet is available
+        response = session.get("https://www.google.com", timeout=5, allow_redirects=False)
+        response.raise_for_status()  # Check for HTTP errors
         return True
-    except requests.RequestException as e:
+    except:
         return False
 
 # Function to get the currently connected SSID using system commands (for Windows)
@@ -88,10 +232,22 @@ log_dialog = None
 log_text = None
 log_dialog_open = False
 
+# Get the dialog geometry from the config file
+width = dialog_geometry["width"]
+height = dialog_geometry["height"]
+x = 0
+y = 0
+
+# Function to update the window's position and size variables
+def update_window_geometry(event):
+    global x, y, width, height
+    x, y = event.x, event.y
+    width, height = event.width, event.height
+
 # Function to show the log dialog
 def show_log_dialog():
     global log_dialog, log_text, log_dialog_open
-    if log_dialog_open == False:
+    if not log_dialog_open:
         log_dialog_open = True
         if log_dialog:
             log_dialog.deiconify()
@@ -100,13 +256,14 @@ def show_log_dialog():
             log_dialog = tk.Tk()
             log_dialog.title("Log Messages")
             log_text = tk.Text(log_dialog)
-            log_dialog.geometry("1024x500")
             log_frame = tk.Frame(log_dialog)
             log_frame.pack(fill=tk.BOTH, expand=True)
             log_text = tk.Text(log_frame, wrap=tk.WORD)
             log_text.pack(fill=tk.BOTH, expand=True)
             update_log()
             log_dialog.protocol("WM_DELETE_WINDOW", hide_log_dialog)
+            center_window(log_dialog, width, height)
+            log_dialog.bind("<Configure>", update_window_geometry)
             log_dialog.mainloop()
     else:
         hide_log_dialog()
@@ -164,17 +321,17 @@ def create_system_tray_icon():
 # Function to check network status
 running = True
 errorcount = 0
-sleepcount = config["check_every_second"]
+sleepcount = check_every_second
 connected_ssid_lower = None
 def check_network_status():
-    global running, errorcount, sleepcount, connected_ssid_lower
+    global running, errorcount, sleepcount, connected_ssid_lower, ssid
     while running and errorcount < 10:
         connected_ssid = get_connected_network()
         if (connected_ssid):
             connected_ssid_lower = connected_ssid.lower()
         if (connected_ssid) and ((connected_ssid_lower == expected_ssid_lower) or (connected_ssid == "Ethernet")):
             if (is_internet_available()):
-                sleepcount = config["check_every_second"]
+                sleepcount = check_every_second
                 message = "Connected to {} and internet connection is available. Checking again in {} seconds...".format(connected_ssid, str(sleepcount))
                 errorcount = 0
                 add_to_log(message)
@@ -194,35 +351,80 @@ def check_network_status():
                         add_to_log("Error when adding to DEFAULT_CIPHERS: {}".format(e))
                         save_to_file("Error when adding to DEFAULT_CIPHERS: {}".format(e))
                         pass
+                        
                     # Function to send request
                     response = send_request()
-                    if response.ok:
+                    if response and response.ok:
                         errorcount = 0
                         sleepcount = 10
                         message = "Request was successful. Connection established! Checking the internet connection in " + str(sleepcount) + " seconds..."
                         add_to_log(message)
                         save_to_file(message)
-                    else:
+                    # Check the response status code
+                    elif response and (not response.ok):
                         errorcount += 1
                         sleepcount = 10  # Sleep ... seconds before trying again
                         message = "Request failed with status code: {}. Trying again in {} seconds... (Errors: {}/10)".format(response.status_code, str(sleepcount), errorcount)
                         # Print the response message
                         add_to_log(message)
                         save_to_file(message)
-                    # Check the response status code
-                    
+                    else:
+                        errorcount += 1
+                        sleepcount = 10
+                        message = "Request failed. Trying again in {} seconds... (Errors: {}/10)".format(str(sleepcount), errorcount)
+                        add_to_log(message)
+                        save_to_file(message)
                 except requests.exceptions.RequestException as e:
-                    # Catch the exception and add a delay before trying again
-                    errorcount += 1
-                    sleepcount = 10
-                    message = "Failed to send request: {}. Trying again in {} seconds... (Errors: {}/10)".format(e, str(sleepcount), str(errorcount))
-                    add_to_log(message)
-                    save_to_file(message)
+                    if not check_url():
+                        errorcount += 1
+                        sleepcount = 3
+                        message = "Payload URL is not reachable. Trying to reconnect to the network... (Errors: {}/10)".format(errorcount)
+                        add_to_log(message)
+                        save_to_file(message)
+                        # If the payload URL is not reachable, try to reconnect to the network
+                        startupinfo = subprocess.STARTUPINFO()
+                        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+                        if connected_ssid == "Ethernet":
+                            try:
+                                # Disable and enable the Ethernet adapter
+                                subprocess.check_output(['netsh', 'interface', 'set', 'interface', 'Ethernet', 'admin=disable'], startupinfo=startupinfo).decode("utf-8")
+                                message = "Disconnected from network. Please wait..."
+                                add_to_log(message)
+                                time.sleep(60)
+                                subprocess.check_output(['netsh', 'interface', 'set', 'interface', 'Ethernet', 'admin=enable'], startupinfo=startupinfo).decode("utf-8")
+                                message = "Connected. Running the script again..."
+                                add_to_log(message)
+                            except Exception as e:
+                                message += "\nFailed to reconnect to Ethernet: {}".format(e)
+                                add_to_log(message)
+                                save_to_file(message)
+                        else:
+                            try:
+                                # Disconnect and reconnect to the Wi-Fi network
+                                subprocess.check_output(['netsh', 'wlan', 'disconnect', 'interface=' + "Wi-Fi"], startupinfo=startupinfo).decode("utf-8")
+                                message = "Disconnected. Please wait..."
+                                add_to_log(message)
+                                time.sleep(60)
+                                subprocess.check_output(['netsh', 'wlan', 'connect', 'name=' + ssid], startupinfo=startupinfo).decode("utf-8")
+                                message = "Connected. Running the script again..."
+                                add_to_log(message)
+                            except Exception as e:
+                                message += "\nFailed to reconnect to Ethernet: {}".format(e)
+                                add_to_log(message)
+                                save_to_file(message)
+                    else:
+                        # Catch the exception and add a delay before trying again
+                        errorcount += 1
+                        sleepcount = 10
+                        message = "Failed to send request: {}. Trying again in {} seconds... (Errors: {}/10)".format(e, str(sleepcount), str(errorcount))
+                        add_to_log(message)
+                        save_to_file(message)
+
                     time.sleep(sleepcount)
                     continue
         else:
             sleepcount = 10  # Sleep ... seconds before trying again
-            message = "Not connected to target {} or any Ethernet. Checking again in {} seconds...".format(expected_ssid, str(sleepcount))
+            message = "Not connected to {} or any other network. Checking again in {} seconds...".format(expected_ssid, str(sleepcount))
             add_to_log(message)
             save_to_file(message)
 
