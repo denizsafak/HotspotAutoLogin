@@ -1,10 +1,9 @@
 # HotspotAutoLogin: Wi-Fi/Hotspot Autologin Script (Automatic Hotspot/Wi-Fi WEB Logins)
+HotspotAutoLogin is a script that designed to automate the login process for Wi-Fi or hotspot networks that require web-based authentication. This script is intended for situations where you often connect to networks that require a web login, such as public hotspots in cafes, hotels, or airports. The script continuously monitors your network connection and automatically logs you in when necessary.
 
 <img title="Profile Selection" src='examples/Profiles.png' width='100%'>
 
 ![Example Log.](/examples/Logs.png)
-
-HotspotAutoLogin is a script that designed to automate the login process for Wi-Fi or hotspot networks that require web-based authentication. This script is intended for situations where you often connect to networks that require a web login, such as public hotspots in cafes, hotels, or airports. The script continuously monitors your network connection and automatically logs you in when necessary.
 
 > # [Download the Latest Executable (.exe) Release](https://github.com/denizsafak/HotspotAutoLogin/releases/latest)
 > You can download the executable (.exe) version of the same script, making it easy to use without the need to install Python or other libraries.
@@ -114,3 +113,5 @@ The script uses various Python libraries, including requests for making POST req
 
 ## Disclaimer
 > Use this script responsibly and only on networks where you have the right to access and use the provided services. Unauthorized access to networks is illegal and unethical.
+
+> Tags: Auto Connect WiFi, Wifi Login Wizard, Wifi Auto Login, Auto Hotspot Login, Hotspot Auto Connect, Hotspot Automator, Auto Hotspot Sign In, Wifi Auto Sign In, Web Login Automator, WiFi Login Automator, Hotspot Login Automator, WEB Portal Auto Login, Quick Hotspot Connect
