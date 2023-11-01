@@ -1,5 +1,7 @@
 # HotspotAutoLogin: Wi-Fi/Hotspot Autologin Script (Automatic Hotspot/Wi-Fi WEB Logins)
 
+<img title="Profile Selection" src='examples/Profiles.png' width='100%'>
+
 ![Example Log.](/examples/Logs.png)
 
 HotspotAutoLogin is a script that designed to automate the login process for Wi-Fi or hotspot networks that require web-based authentication. This script is intended for situations where you often connect to networks that require a web login, such as public hotspots in cafes, hotels, or airports. The script continuously monitors your network connection and automatically logs you in when necessary.
@@ -61,7 +63,47 @@ In the "Payload" tab, you can find your form data or request payload that displa
 
 > ## Example useage:
 > 
-![Example Request.](/examples/config.png)
+
+```json
+{
+    "profiles": [
+        {
+            "name": "NAME_OF_YOUR_PROFILE",
+            "ssid": "SSID_OF_YOUR_WIFI",
+            "url": "PAYLOAD_URL_HERE",
+            "payload": {
+                "username": "PLEASE WRITE YOUR OWN PAYLOAD VALUES HERE. THIS IS AN EXAMPLE",
+                "password": "PLEASE WRITE YOUR OWN PAYLOAD VALUES HERE. THIS IS AN EXAMPLE"
+            },
+            "headers": {
+                "Content-Type": "application/json;charset=UTF-8",
+                "Connection": "keep-alive",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
+            },
+            "check_every_second": 600,
+            "dialog_geometry": {
+                "width": 1024,
+                "height": 500
+            }
+        },
+        {
+            "name": "NAME_OF_YOUR_PROFILE (2)",
+            "url": "PAYLOAD_URL_HERE",
+            "payload": "&auth_user=XXXX%40gmail.com&auth_pass=xxx&redirurl=&accept=Login",
+            "headers": {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Connection": "keep-alive",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36 Edg/118.0.2088.69"
+            },
+            "check_every_second": 600,
+            "dialog_geometry": {
+                "width": 1024,
+                "height": 500
+            }
+        }
+    ]
+}
+```
 
 ## Dependencies
 The script uses various Python libraries, including requests for making POST requests, pystray for creating the system tray icon, and tkinter for the log window. Make sure you have all the required libraries.
