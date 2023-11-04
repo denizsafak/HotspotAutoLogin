@@ -28,6 +28,7 @@ The script reads its configuration from a config.json file. This file contains t
 > If you are running it **directly with Python**, you need to install all the libraries that's used in the script and you need to install this specific library:
 > ```
 > python -m pip install requests "urllib3<2"
+> python -m pip install pystray
 > ```
 
 
