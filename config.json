@@ -1,7 +1,7 @@
 {
     "profiles": [
         {
-            "name": "NAME_OF_YOUR_PROFILE",
+            "name": "NAME_OF_YOUR_PROFILE (WI-FI EXAMPLE)",
             "ssid": "SSID_OF_YOUR_WIFI",
             "url": "PAYLOAD_URL_HERE",
             "payload": {
@@ -20,7 +20,7 @@
             }
         },
         {
-            "name": "NAME_OF_YOUR_PROFILE (2)",
+            "name": "NAME_OF_YOUR_PROFILE (ETHERNET EXAMPLE)",
             "url": "PAYLOAD_URL_HERE",
             "payload": "&auth_user=XXXX%40gmail.com&auth_pass=xxx&redirurl=&accept=Login",
             "headers": {
