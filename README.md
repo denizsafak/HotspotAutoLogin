@@ -24,12 +24,8 @@ The script reads its configuration from a config.json file. This file contains t
 ## `Usage`
 
 > [!IMPORTANT] 
-> ### Python Requirements
-> If you are running it **directly with Python**, you need to install all the libraries that's used in the script and you need to install this specific library:
-> ```
-> python -m pip install requests "urllib3<2"
-> python -m pip install pystray
-> ```
+> ### Runing with Python
+> You need to install Python on your computer for this program to work. After you install Python, run the 'run.bat' file. The program will open after installing the required files.
 
 
 ### Configuration
