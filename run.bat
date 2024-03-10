@@ -1,15 +1,25 @@
 @echo off
-IF NOT EXIST .venv\Scripts\activate (
+set NAME=HotspotAutoLogin
+set "requirementsFile=requirements.txt"
+set VENV_PATH=.venv
+set ACTIVATE_PATH=%VENV_PATH%\Scripts\activate
+
+IF NOT EXIST %ACTIVATE_PATH% (
     echo Creating virtual environment...
-    virtualenv .venv
-    echo Virtual environment created.
+    virtualenv %VENV_PATH%
 )
 
 echo Activating virtual environment...
-call .venv\Scripts\activate
+call %ACTIVATE_PATH%
 
-echo Installing requirements...
-pip install -r requirements.txt
+echo Checking the requirements...
+for /f "delims=" %%i in (%requirementsFile%) do (
+    pip freeze | findstr /c:%%i > nul
+    if errorlevel 1 (
+        echo Installing missing or outdated package: %%i
+        pip install %%i --upgrade --quiet
+    )
+)
 
-echo Starting HotspotAutoLogin...
-start /B "" ".venv/Scripts/pythonw.exe" HotspotAutoLogin.pyw
+echo Starting %NAME%...
+start /B "" "%VENV_PATH%/Scripts/pythonw.exe" HotspotAutoLogin.pyw
