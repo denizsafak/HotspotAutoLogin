@@ -1,5 +1,5 @@
 # HotspotAutoLogin: Automatically Log In Wi-Fi/Ethernet Networks (Automatic WEB Portal Logins)
-HotspotAutoLogin is a script that designed to automate the login process for Wi-Fi or Ethernet networks that require web-based authentication. This script is intended for situations where you often connect to networks that require a web login, such as public hotspots in cafes, hotels, or airports. The script continuously monitors your network connection and automatically logs you in when necessary.
+HotspotAutoLogin is a script that designed to automate the login process for Wi-Fi or Ethernet networks that require web-based authentication. This script is intended for situations where you often connect to networks that require a web login, such as public hotspots in cafes, hotels, or airports. The script continuously monitors the internet connection and automatically logs you in when necessary.
 
 <img title="Profile Selection" src='examples/Profiles.png' width='100%'>
 
@@ -8,25 +8,25 @@ HotspotAutoLogin is a script that designed to automate the login process for Wi-
 > # [Download the Latest Executable (.exe) Release](https://github.com/denizsafak/HotspotAutoLogin/releases/latest)
 > You can download the executable (.exe) version of the same script, making it easy to use without the need to install Python or other libraries.
 
-## `How It Works`
-### Network Monitoring
-The script will continuously monitor your network connection. When you connect to the specified SSID but there is no internet access, it will attempt to log in automatically.
+## `How to Run?`
 
-### Autologin
-If you are connected to the correct SSID but lack internet access, the script attempts to log in by sending an POST request to the provided URL with the specified credentials. If the login is successful (status code 200), the script will continue monitoring.
+### Option 1: Executable Script
+- If you don't want to install Python, you can download the precompiled executable version from the Releases section.
+[Download the Latest Executable (.exe) Release](https://github.com/denizsafak/HotspotAutoLogin/releases/latest)
+- Double-click on HotspotAutoLogin.exe to launch the application. The wallpaper information display will appear on your screen.
 
-### Logging
-Any important events or actions taken by the script are logged both in a log file (log.txt) and in the log window that can be accessed via the system tray icon.
+### Option 2: Run with Python
+- Clone or download the repository to your local machine.
+- Install Python to your computer.
+- Run "run.bat" file.
 
-### Configuration
-The script reads its configuration from a config.json file. This file contains the necessary information, such as your login credentials, the URL of the authentication portal, the SSID (network name) to which you want to connect, and the frequency of network checks in seconds.
+## `Features`
+- The script will continuously monitor the internet connection. When you connect to the specified SSID but there is no internet access, it will attempt to log in automatically.
+- If you are connected to the correct SSID but lack internet access, the script attempts to log in by sending an POST request to the provided URL with the specified credentials. If the login is successful (status code 200), the script will continue monitoring.
+- Any important events or actions taken by the script are logged both in a log file (log.txt) and in the log window that can be accessed via the system tray icon.
+- The script reads its configuration from a config.json file. This file contains the necessary information, such as your login credentials, the URL of the authentication portal, the SSID (network name) to which you want to connect, and the frequency of network checks in seconds.
 
 ## `Usage`
-
-> [!IMPORTANT] 
-> ### Runing with Python
-> You need to install Python on your computer for this program to work. After you install Python, run the 'run.bat' file. The program will open after installing the required files.
-
 
 ### Configuration
 Edit the config.json file with your specific information, including your login credentials, the portal URL, the SSID of the network you want to connect to, and the check interval in seconds. [Click to learn how to Configure the config.json](#how-to-configure-the-configjson)
@@ -52,7 +52,7 @@ In the "Payload" tab, you can find your form data or request payload that displa
 ![Example Request.](/examples/Request.png)
 
 `"ssid":` This is your network's SSID. For example "MyHome_5G"
-> [!NOTE]
+> [!IMPORTANT]
 > **If you are using a wired (ethernet) connection, you don't need to enter ssid. You can leave it blank.**
 
 `"check_every_second":` The frequency of the script for checking your internet connection status. For example "100", it will try to access the internet every 100 seconds.
@@ -100,9 +100,6 @@ In the "Payload" tab, you can find your form data or request payload that displa
     ]
 }
 ```
-
-## Dependencies
-The script uses various Python libraries, including requests for making POST requests, pystray for creating the system tray icon, and tkinter for the log window. Make sure you have all the required libraries.
 
 > [!NOTE]
 > - The script relies on the assumption that the web portal uses basic authentication. If the portal uses a more complex login mechanism, additional adjustments may be necessary.
