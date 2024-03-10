@@ -64,12 +64,12 @@ In the "Payload" tab, you can find your form data or request payload that displa
 {
     "profiles": [
         {
-            "name": "NAME_OF_YOUR_PROFILE",
-            "ssid": "SSID_OF_YOUR_WIFI",
-            "url": "PAYLOAD_URL_HERE",
+            "name": "My School Wi-Fi",
+            "ssid": "SCHOOL_WIFI_5G",
+            "url": "https://connect.schoolwifi.com/api/portal/dynamic/authenticate",
             "payload": {
-                "username": "PLEASE WRITE YOUR OWN PAYLOAD VALUES HERE. THIS IS AN EXAMPLE",
-                "password": "PLEASE WRITE YOUR OWN PAYLOAD VALUES HERE. THIS IS AN EXAMPLE"
+                "username": "85795013@myschool.com",
+                "password": "123455678"
             },
             "headers": {
                 "Content-Type": "application/json;charset=UTF-8",
@@ -83,9 +83,9 @@ In the "Payload" tab, you can find your form data or request payload that displa
             }
         },
         {
-            "name": "NAME_OF_YOUR_PROFILE (2)",
-            "url": "PAYLOAD_URL_HERE",
-            "payload": "&auth_user=XXXX%40gmail.com&auth_pass=xxx&redirurl=&accept=Login",
+            "name": "My School ETHERNET",
+            "url": "http://10.3.41.15:8002/index.php?zone=dormnet",
+            "payload": "&auth_user=85795013%40myschool.com&auth_pass=123455678&redirurl=&accept=Login",
             "headers": {
                 "Content-Type": "application/x-www-form-urlencoded",
                 "Connection": "keep-alive",
