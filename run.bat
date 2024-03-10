@@ -17,7 +17,7 @@ echo Checking the requirements...
 for /f "delims=" %%i in (%requirementsFile%) do (
     pip freeze | findstr /c:%%i > nul
     if errorlevel 1 (
-        echo Installing missing or outdated package: %%i
+        echo Installing package: %%i
         pip install %%i --upgrade --quiet
     )
 )
