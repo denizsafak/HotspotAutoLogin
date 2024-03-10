@@ -1,5 +1,6 @@
 @echo off
 set NAME=HotspotAutoLogin
+set RUN=HotspotAutoLogin.pyw
 set "requirementsFile=requirements.txt"
 set VENV_PATH=.venv
 set ACTIVATE_PATH=%VENV_PATH%\Scripts\activate
@@ -22,4 +23,4 @@ for /f "delims=" %%i in (%requirementsFile%) do (
 )
 
 echo Starting %NAME%...
-start /B "" "%VENV_PATH%/Scripts/pythonw.exe" HotspotAutoLogin.pyw
+start /B "" "%VENV_PATH%/Scripts/pythonw.exe" %RUN%
