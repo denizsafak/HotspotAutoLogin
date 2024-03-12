@@ -342,8 +342,8 @@ def check_network_status():
                     response = send_request()
                     if response.ok:
                         errorcount = 0
-                        sleepcount = 1
-                        message = "Request was successful. Checking the internet connection..."
+                        sleepcount = 10
+                        message = "Request was successful. Checking the internet connection in {} seconds...".format(str(sleepcount))
                         add_to_log(message)
                         save_to_file(message)
                 except requests.exceptions.RequestException as e:
