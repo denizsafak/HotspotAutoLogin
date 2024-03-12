@@ -24,10 +24,10 @@ def center_window(window, width, height):
     y = (screen_height - height) // 2
     window.geometry(f"{width}x{height}+{x}+{y}")
 
-def select_profile():
+def run_profile():
     global selected_profile
+    refresh_profile_details()
     selected_index = listbox.curselection()
-    
     if selected_index:
         selected_index = int(selected_index[0])
         selected_profile = profiles[selected_index]
@@ -35,6 +35,7 @@ def select_profile():
 
 # Define a function to update the profile details
 def update_profile_details(event):
+    global selected_profile
     selected_index = listbox.curselection()
     if selected_index:
         selected_index = int(selected_index[0])
@@ -42,23 +43,40 @@ def update_profile_details(event):
         profile_name.config(text=f"Selected Profile: {selected_profile['name']}")
         profile_details.config(state=tk.NORMAL)
         profile_details.delete(1.0, tk.END)
-        
         # Insert profile details with all variables except "name"WWWW
         profile_details.tag_configure("bold", font=("Courier New", 10, "bold"), foreground="#08872a")
         for key, value in selected_profile.items():
             if key != 'name':  # Skip displaying the "name" variable
                 profile_details.insert(tk.END, f"{key}: ", "bold")
                 profile_details.insert(tk.END, f"{value}\n")
-        
         profile_details.config(state=tk.DISABLED)
     else:
-        reset_profile_details()
+        profile_name.config(text="Selected Profile: ")
+        profile_details.config(state=tk.NORMAL)
+        profile_details.delete(1.0, tk.END)
+        profile_details.config(state=tk.DISABLED)
 
-def reset_profile_details():
-    profile_name.config(text="Selected Profile: ")
-    profile_details.config(state=tk.NORMAL)
-    profile_details.delete(1.0, tk.END)
-    profile_details.config(state=tk.DISABLED)
+# Function to refresh the profile details
+def refresh_profile_details():
+    global profiles
+    # Get the index of the currently selected profile
+    selected_index = listbox.curselection()
+    selected_index = int(selected_index[0]) if selected_index else None
+    # Reload configuration from file
+    with open("config.json", "r") as f:
+        config = json.load(f)
+    profiles = config.get("profiles", [])
+    listbox.delete(0, tk.END)  # Clear the listbox
+    for profile in profiles:
+        listbox.insert(tk.END, profile['name'])
+    # Reselect the previously selected profile if it exists
+    if selected_index is not None and selected_index < len(profiles):
+        listbox.select_set(selected_index)  
+        update_profile_details(None)
+
+# Function to open the config file
+def open_config():
+    os.system("config.json")
 
 # Load configuration from file
 with open("config.json", "r") as f:
@@ -96,16 +114,21 @@ scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 listbox.config(yscrollcommand=scrollbar.set)
 scrollbar.config(command=listbox.yview)
 
-# Bind the listbox selection event to update the profile details
-listbox.bind('<<ListboxSelect>>', update_profile_details)
+# Bind the listbox selection event to update and refresh the profile details
+listbox.bind('<<ListboxSelect>>', lambda event: (update_profile_details(event), refresh_profile_details()))
+listbox.bind('<Return>', run_profile)  # Run the selected profile when the Enter key is pressed
 
 # Create a frame for displaying profile details
 details_frame = tk.Frame(root)
 details_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=10, pady=10)
 
-# Create a label for the selected profile name
-profile_name = tk.Label(details_frame, text="Selected Profile: ", anchor="w")
-profile_name.pack(fill="x", pady=(0, 5))
+# Create a frame for the profile name and the Refresh button
+profile_name_frame = tk.Frame(details_frame)
+profile_name_frame.pack(fill="x", pady=(0, 5))
+
+# Create the label for the selected profile name
+profile_name = tk.Label(profile_name_frame, text="Selected Profile: ", anchor="w")
+profile_name.pack(side=tk.LEFT)
 
 # Create a Text widget for displaying profile details with a fixed height and scrollbars
 profile_details = Text(details_frame, wrap=tk.WORD, height=10, state=tk.DISABLED, exportselection=False)
@@ -125,11 +148,43 @@ def on_closing():
 
 root.protocol("WM_DELETE_WINDOW", on_closing)
 
-# Create the "Select" button
-select_button = tk.Button(
+# Create the "Refresh" button within the profile name frame
+refresh_button = tk.Button(
+    profile_name_frame,
+    text="Refresh",
+    command=refresh_profile_details,
+    padx=5,
+    pady=0,
+    fg="white",
+    bg="grey",
+    activebackground="#606060",
+    activeforeground="white",
+    relief=tk.RAISED,
+    borderwidth=2,
+)
+refresh_button.pack(side=tk.RIGHT)
+
+# Create the "Config" button
+config_button = tk.Button(
+    details_frame,
+    text="Config",
+    command=open_config,
+    padx=30,
+    pady=10,
+    fg="white",
+    bg="grey",
+    activebackground="#606060",
+    activeforeground="white",
+    relief=tk.RAISED,
+    borderwidth=2,
+)
+config_button.pack(side=tk.LEFT, fill="x", padx=(0, 2), pady=(10, 0), expand=False)
+
+# Create the "Run" button
+run_button = tk.Button(
     details_frame,
     text="Run",
-    command=select_profile,
+    command=run_profile,
     padx=10,
     pady=10,
     fg="white",
@@ -139,7 +194,10 @@ select_button = tk.Button(
     relief=tk.RAISED,
     borderwidth=2,
 )
-select_button.pack(fill="x", pady=(10, 0))
+run_button.pack(side=tk.LEFT, fill="x", padx=(2, 0), pady=(10, 0), expand=True)
+
+# Configure weights for horizontal stretching
+details_frame.pack_propagate(False)
 
 # Start with no profile selected
 selected_profile = None
@@ -167,7 +225,6 @@ if selected_profile:
         ssid = "Ethernet"
         expected_ssid = ssid
         expected_ssid_lower = None
-
 
 # Function to send the request
 def send_request():
@@ -222,7 +279,7 @@ def exit_application(icon, item):
     os._exit(0)
 
 # Queue to store log messages
-log_messages = deque(maxlen=20)
+log_messages = deque(maxlen=30)
 log_dialog = None
 log_text = None
 log_dialog_open = False
@@ -239,17 +296,18 @@ def update_window_geometry(event):
     x, y = event.x, event.y
     width, height = event.width, event.height
 
-# Function to show the log dialog
+# Function to show the log dialog with the currently selected profile name
 def show_log_dialog():
     global log_dialog, log_text, log_dialog_open
     if not log_dialog_open:
         log_dialog_open = True
         if log_dialog:
+            log_dialog.title(f"Log Messages ({selected_profile['name']})")  # Update title with profile name
             log_dialog.deiconify()
             update_log()
         else:
             log_dialog = tk.Tk()
-            log_dialog.title("Log Messages")
+            log_dialog.title(f"Log Messages ({selected_profile['name']})")  # Update title with profile name
             log_text = tk.Text(log_dialog)
             log_frame = tk.Frame(log_dialog)
             log_frame.pack(fill=tk.BOTH, expand=True)
@@ -342,7 +400,7 @@ def check_network_status():
                     response = send_request()
                     if response.ok:
                         errorcount = 0
-                        sleepcount = 10
+                        sleepcount = 20
                         message = "Request was successful. Checking the internet connection in {} seconds...".format(str(sleepcount))
                         add_to_log(message)
                         save_to_file(message)
