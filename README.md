@@ -1,4 +1,4 @@
-# HotspotAutoLogin: Automatic Wi-Fi/Ethernet Network Logins (Automatic WEB/Captive Portal Login)
+# HotspotAutoLogin: Automatic Wi-Fi/Ethernet WEB Logins (Auto WEB/Captive Portal Logins)
 HotspotAutoLogin is a script that designed to automate the login process for Wi-Fi or Ethernet networks that require web-based authentication. This script is intended for situations where you often connect to networks that require a web login, such as public hotspots in cafes, hotels, or airports. The script continuously monitors the internet connection and automatically logs you in when necessary.
 
 <img title="Profile Selection" src='examples/Profiles.png' width='100%'>
