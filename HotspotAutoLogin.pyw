@@ -1,7 +1,6 @@
 import json
 import os
 import requests
-import socket
 import time
 import subprocess
 import pystray
@@ -11,6 +10,9 @@ from tkinter import Text, Scrollbar
 from PIL import Image
 from collections import deque
 from datetime import datetime
+import dns.resolver
+dns.resolver.override_system_resolver(dns.resolver.Resolver())
+dns.resolver.default_resolver = dns.resolver.Resolver()
 from urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
@@ -158,7 +160,6 @@ if selected_profile:
     check_every_second = selected_profile.get('check_every_second', "")
     dialog_geometry = selected_profile.get('dialog_geometry', "")
     headers = selected_profile.get('headers', "")
-
     if ssid:
         expected_ssid = ssid
         expected_ssid_lower = expected_ssid.lower()
@@ -167,30 +168,24 @@ if selected_profile:
         expected_ssid = ssid
         expected_ssid_lower = None
 
-# Function to check if the URL is valid
-def check_url():
-    try:
-        socket.gethostbyname(url)
-        return True
-    except Exception:
-        return False
 
-session = requests.Session()
 # Function to send the request
 def send_request():
-    response = session.post(url, json.dumps(payload), headers=headers, allow_redirects=True, timeout=5)
+    session = requests.Session()
+    requests.packages.urllib3.util.ssl_.DEFAULT_CIPHERS += 'HIGH:!DH:!aNULL'
+    response = session.post(url, json.dumps(payload), headers=headers, allow_redirects=True, verify=False, timeout=3)
     response.raise_for_status()  # Check for HTTP errors
-    print(response.text)
     return response
 
 # Function to check if internet is available
 def is_internet_available():
     try:
-        # Try to send a simple HTTP GET request to a known website
-        response = session.get("https://www.google.com", timeout=5, allow_redirects=False)
-        response.raise_for_status()  # Check for HTTP errors
+        # -n is the number of pings
+        # -l is the size of the packet
+        # -w is the timeout in seconds
+        subprocess.run(['ping', '8.8.8.8', '-n', '3', '-l', '32', '-w', '3'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, creationflags=subprocess.CREATE_NO_WINDOW)
         return True
-    except:
+    except subprocess.CalledProcessError:
         return False
 
 # Function to get the currently connected SSID using system commands (for Windows)
@@ -310,7 +305,7 @@ def save_to_file(message):
 
 # Create the system tray icon
 def create_system_tray_icon():
-    image = Image.open("icon.png")
+    image = Image.open("icon.ico")
     menu = pystray.Menu(
         pystray.MenuItem('Show Log', show_log_dialog, default=True),
         pystray.MenuItem('Exit', exit_application)
@@ -324,7 +319,7 @@ errorcount = 0
 sleepcount = check_every_second
 connected_ssid_lower = None
 def check_network_status():
-    global running, errorcount, sleepcount, connected_ssid_lower, ssid
+    global running, errorcount, sleepcount, connected_ssid_lower, ssid, response
     while running and errorcount < 10:
         connected_ssid = get_connected_network()
         if (connected_ssid):
@@ -336,91 +331,76 @@ def check_network_status():
                 errorcount = 0
                 add_to_log(message)
             else:
-                sleepcount = 3
-                message = "Connected to {} but internet is down. Sending the request in {} seconds...".format(connected_ssid, str(sleepcount))
+                sleepcount = 1
+                message = "Connected to {} but internet is down. Sending the request...".format(connected_ssid)
                 add_to_log(message)
                 save_to_file(message)
                 time.sleep(sleepcount)
                 # Send the request and handle potential errors
-                try:
-                    # Update SSL cipher list
-                    try:
-                        requests.packages.urllib3.util.ssl_.DEFAULT_CIPHERS += 'HIGH:!DH:!aNULL'
-                    except AttributeError as e:
-                        # no pyopenssl support used / needed / available
-                        add_to_log("Error when adding to DEFAULT_CIPHERS: {}".format(e))
-                        save_to_file("Error when adding to DEFAULT_CIPHERS: {}".format(e))
-                        pass
-                        
+                try:                        
                     # Function to send request
                     response = send_request()
-                    if response and response.ok:
+                    if response.ok:
                         errorcount = 0
-                        sleepcount = 10
-                        message = "Request was successful. Connection established! Checking the internet connection in " + str(sleepcount) + " seconds..."
-                        add_to_log(message)
-                        save_to_file(message)
-                    # Check the response status code
-                    elif response and (not response.ok):
-                        errorcount += 1
-                        sleepcount = 10  # Sleep ... seconds before trying again
-                        message = "Request failed with status code: {}. Trying again in {} seconds... (Errors: {}/10)".format(response.status_code, str(sleepcount), errorcount)
-                        # Print the response message
-                        add_to_log(message)
-                        save_to_file(message)
-                    else:
-                        errorcount += 1
-                        sleepcount = 10
-                        message = "Request failed. Trying again in {} seconds... (Errors: {}/10)".format(str(sleepcount), errorcount)
+                        sleepcount = 1
+                        message = "Request was successful. Checking the internet connection..."
                         add_to_log(message)
                         save_to_file(message)
                 except requests.exceptions.RequestException as e:
-                    if not check_url():
-                        errorcount += 1
-                        sleepcount = 3
-                        message = "Payload URL is not reachable. Trying to reconnect to the network... (Errors: {}/10)".format(errorcount)
-                        add_to_log(message)
-                        save_to_file(message)
-                        # If the payload URL is not reachable, try to reconnect to the network
-                        startupinfo = subprocess.STARTUPINFO()
-                        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-                        if connected_ssid == "Ethernet":
-                            try:
-                                # Disable and enable the Ethernet adapter
-                                subprocess.check_output(['netsh', 'interface', 'set', 'interface', 'Ethernet', 'admin=disable'], startupinfo=startupinfo).decode("utf-8")
-                                message = "Disconnected from network. Please wait..."
-                                add_to_log(message)
-                                time.sleep(60)
-                                subprocess.check_output(['netsh', 'interface', 'set', 'interface', 'Ethernet', 'admin=enable'], startupinfo=startupinfo).decode("utf-8")
-                                message = "Connected. Running the script again..."
-                                add_to_log(message)
-                            except Exception as e:
-                                message += "\nFailed to reconnect to Ethernet: {}".format(e)
-                                add_to_log(message)
-                                save_to_file(message)
+                    errorcount += 1
+                    sleepcount = 1
+                    if isinstance(e, requests.exceptions.HTTPError):
+                        # Handle HTTP errors with different messages for different status codes
+                        status_code = e.response.status_code
+                        if status_code == 400:
+                            message = "Request failed with 400 Bad Request error. Please check your payload and URL. Trying to reconnect to the network... (Errors: {}/10)".format(errorcount)
+                        elif status_code == 404:
+                            message = "Request failed with 404 Not Found error. Trying to reconnect to the network... (Errors: {}/10)".format(errorcount)
+                        elif status_code == 500:
+                            message = "Request failed with 500 Internal Server Error. Trying to reconnect to the network... (Errors: {}/10)".format(errorcount)
+                        elif status_code == 503:
+                            message = "Request failed with 503 Service Unavailable error. Trying to reconnect to the network... (Errors: {}/10)".format(errorcount)
                         else:
-                            try:
-                                # Disconnect and reconnect to the Wi-Fi network
-                                subprocess.check_output(['netsh', 'wlan', 'disconnect', 'interface=' + "Wi-Fi"], startupinfo=startupinfo).decode("utf-8")
-                                message = "Disconnected. Please wait..."
-                                add_to_log(message)
-                                time.sleep(60)
-                                subprocess.check_output(['netsh', 'wlan', 'connect', 'name=' + ssid], startupinfo=startupinfo).decode("utf-8")
-                                message = "Connected. Running the script again..."
-                                add_to_log(message)
-                            except Exception as e:
-                                message += "\nFailed to reconnect to Ethernet: {}".format(e)
-                                add_to_log(message)
-                                save_to_file(message)
+                            message = "Request failed with HTTP error ({}). Trying to reconnect to the network... (Errors: {}/10)".format(status_code, errorcount)
                     else:
-                        # Catch the exception and add a delay before trying again
-                        errorcount += 1
-                        sleepcount = 10
-                        message = "Failed to send request: {}. Trying again in {} seconds... (Errors: {}/10)".format(e, str(sleepcount), str(errorcount))
-                        add_to_log(message)
-                        save_to_file(message)
-
+                        message = "Request failed with error:{}. Trying to reconnect to the network... (Errors: {}/10)".format(e, errorcount)
+                    # Print the response message
+                    add_to_log(message)
+                    save_to_file(message)
                     time.sleep(sleepcount)
+                    # If the payload URL is not reachable, try to reconnect to the network
+                    startupinfo = subprocess.STARTUPINFO()
+                    startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+                    if connected_ssid == "Ethernet":
+                        try:
+                            # Disable and enable the Ethernet adapter
+                            message = "Disconnecting from Ethernet..."
+                            add_to_log(message)
+                            subprocess.check_output(['ipconfig', '/release', "Ethernet"], shell=True, text=True)
+                            time.sleep(5)
+                            subprocess.check_output(['ipconfig', '/renew', "Ethernet"], shell=True, text=True)
+                            time.sleep(2)
+                            message = "Connected to Ethernet. Running the script again..."
+                            add_to_log(message)
+                        except Exception as e:
+                            message += "\nFailed to reconnect to Ethernet: {}".format(e)
+                            add_to_log(message)
+                            save_to_file(message)
+                    else:
+                        try:
+                            # Disconnect and reconnect to the Wi-Fi network
+                            message = "Disconnecting from {}...".format(ssid)
+                            add_to_log(message)
+                            subprocess.check_output(['netsh', 'wlan', 'disconnect', 'interface=' + "Wi-Fi"], startupinfo=startupinfo).decode("utf-8")
+                            time.sleep(5)
+                            subprocess.check_output(['netsh', 'wlan', 'connect', 'name=' + ssid], startupinfo=startupinfo).decode("utf-8")
+                            time.sleep(2)
+                            message = "Connected to {}. Running the script again...".format(ssid)
+                            add_to_log(message)
+                        except Exception as e:
+                            message += "\nFailed to reconnect to {}: {}".format(ssid, e)
+                            add_to_log(message)
+                            save_to_file(message)
                     continue
         else:
             sleepcount = 10  # Sleep ... seconds before trying again
