@@ -33,6 +33,8 @@ HotspotAutoLogin is a script that designed to automate the login process for Wi-
 
 ## `How to Configure the config.json?`
 
+![How to Animation.](/examples/howto.gif)
+
 1) When you're in the web login page, open your browser's Developer Tools. (You can press F12 or Ctrl + Shift + I (or Cmd + Option + I on Mac) to open the Developer Tools. Alternatively, you can right-click anywhere on the page and select "Inspect" or "Inspect Element.")
 2) **Navigate to the Network Tab:** In the Developer Tools, click on the "Network" tab.
 3) **Trigger the POST Request:** Perform the action that sends the POST request. <ins>**(You can try to login with incorrect password)**</ins>. The network tab will capture all network requests made by the page, including your POST request.
