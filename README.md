@@ -1,4 +1,4 @@
-# HotspotAutoLogin: Automatic Wi-Fi/Ethernet Network Logins (Automatic WEB/Captive Portal Logins)
+# HotspotAutoLogin: Automatic Wi-Fi/Ethernet Network Logins (Auto-Login for WEB/Captive Portals)
 HotspotAutoLogin is a script that designed to automate the login process for Wi-Fi or Ethernet networks that require web-based authentication. This script is intended for situations where you often connect to networks that require a web login, such as public hotspots in cafes, hotels, or airports. The script continuously monitors the internet connection and automatically logs you in when necessary.
 
 <img title="Profile Selection" src='examples/Profiles.png' width='100%'>
@@ -22,7 +22,7 @@ HotspotAutoLogin is a script that designed to automate the login process for Wi-
 
 ## `Features`
 - The script will continuously monitor the internet connection. When you connect to the specified SSID but there is no internet access, it will attempt to log in automatically.
-- If you are connected to the correct SSID but lack internet access, the script attempts to log in by sending an POST request to the provided URL with the specified credentials. If the login is successful (status code 200), the script will continue monitoring.
+- If you are connected to the correct SSID but lack internet access, the script attempts to log in by sending an POST request to the provided URL with the specified credentials. If the login is successful, the script will continue monitoring.
 - Any important events or actions taken by the script are logged both in a log file (log.txt) and in the log window that can be accessed via the system tray icon.
 - The script reads its configuration from a config.json file. This file contains the necessary information, such as your login credentials, the URL of the authentication portal, the SSID (network name) to which you want to connect, and the frequency of network checks in seconds.
 
