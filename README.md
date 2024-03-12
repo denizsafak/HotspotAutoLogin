@@ -27,35 +27,29 @@ HotspotAutoLogin is a script that designed to automate the login process for Wi-
 - The script reads its configuration from a config.json file. This file contains the necessary information, such as your login credentials, the URL of the authentication portal, the SSID (network name) to which you want to connect, and the frequency of network checks in seconds.
 
 ## `Usage`
-
-### Configuration
-Edit the config.json file with your specific information, including your login credentials, the portal URL, the SSID of the network you want to connect to, and the check interval in seconds. [Click to learn how to Configure the config.json](#how-to-configure-the-configjson)
-
-### System Tray Icon
-When you run the script, a system tray icon will appear. Right-click on the icon to access options like showing the log or exiting the application.
-
-### Log
-You can view the log of the script's actions by clicking the "Show Log" option in the system tray menu.
+- Edit the config.json file with your specific information, including your login credentials, the portal URL, the SSID of the network you want to connect to, and the check interval in seconds. [Click to learn how to Configure the config.json](#how-to-configure-the-configjson)
+- When you run the script, a system tray icon will appear. Right-click on the icon to access options like showing the log or exiting the application.
+- You can view the log of the script's actions by clicking the "Show Log" option in the system tray menu.
 
 ## `How to Configure the config.json?`
-`"payload":` You need to find your own payload values. These are the values that your browser sends when you try to login with your credentials. For example username, phone number, password, etc. To find that:
-- When you're in the login page, open your browser's Developer Tools, press F12 or Ctrl + Shift + I (or Cmd + Option + I on Mac) to open the Developer Tools. Alternatively, you can right-click anywhere on the page and select "Inspect" or "Inspect Element."
-- **Navigate to the Network Tab:** In the Developer Tools, click on the "Network" tab at the top.
-- **Trigger the POST Request:** Perform the action that sends the POST request. **(Try to login with incorrect password)**. The network tab will capture all network requests made by the page, including the POST request.
-- **Locate the POST Request:** Look for the specific POST request in the list of network requests. It will typically have a method of "POST" and the URL it was sent to. Click on the POST request to select it.
-- **Inspect the POST Data:** In the right-hand pane, you will see various tabs. Click on the "Payload" tab.
-In the "Payload" tab, you can find your form data or request payload that displays the data being sent with the POST request. This is where you can see your POST payload. You need to enter the same payload values to config.json.
+
+1) When you're in the web login page, open your browser's Developer Tools. (You can press F12 or Ctrl + Shift + I (or Cmd + Option + I on Mac) to open the Developer Tools. Alternatively, you can right-click anywhere on the page and select "Inspect" or "Inspect Element.")
+2) **Navigate to the Network Tab:** In the Developer Tools, click on the "Network" tab.
+3) **Trigger the POST Request:** Perform the action that sends the POST request. <ins>**(You can try to login with incorrect password)**</ins>. The network tab will capture all network requests made by the page, including your POST request.
+4) **Locate the POST Request:** You need to find yours. Look for the POST request in the list of network requests. It will typically have a method of "POST" and the URL it was sent to.
+
+`"payload":` Go to "Payload" tab and enter the payload values here.
 
 ![Example Payload.](/examples/Payload.png)
 
-`"url":` This is **NOT** the base URL of the login page. You can find this URL from the same page that you find your payload. It is called "Request URL", in the "Headers" tab.
+`"url":` Enter the "Request URL" in the "Headers" tab here.
+
 ![Example Request.](/examples/Request.png)
 
-`"ssid":` This is your network's SSID. For example "MyHome_5G"
-> [!IMPORTANT]
-> **If you are using a wired (ethernet) connection, you don't need to enter ssid. You can leave it blank.**
 
-`"check_every_second":` The frequency of the script for checking your internet connection status. For example "100", it will try to access the internet every 100 seconds.
+`"ssid":` This is your network's SSID. For example "MyHome_5G" **(If you are using a wired (ethernet) connection, you don't need to enter ssid**
+
+`"check_every_second":` The frequency of the script for checking your internet connection status. For example "100", it will try to check the internet every 100 seconds.
 
 > ## Example useage:
 > 
