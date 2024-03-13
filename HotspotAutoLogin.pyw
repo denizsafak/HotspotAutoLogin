@@ -76,7 +76,7 @@ def refresh_profile_details():
 
 # Function to open the config file
 def open_config():
-    os.system("config.json")
+    subprocess.Popen(["start", "config.json"], shell=True)
 
 # Load configuration from file
 with open("config.json", "r") as f:
