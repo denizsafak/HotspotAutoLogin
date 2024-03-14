@@ -7,7 +7,7 @@ set VENV_PATH=.venv
 set ACTIVATE_PATH=%VENV_PATH%\Scripts\activate
 
 :: Check if Python is installed
-python --version >nul 2>&1
+pip --version >nul 2>&1
 if errorlevel 1 (
     echo Python is not installed.
     set /p "userinp=Do you want to install Python (y/n)? "
@@ -22,8 +22,21 @@ if errorlevel 1 (
     )
 )
 
+:: Check if virtual environment exists
 IF NOT EXIST %ACTIVATE_PATH% (
     echo Creating virtual environment...
+    python -m venv %VENV_PATH%
+) ELSE (
+    goto check_python
+)
+
+:: Check if Python exists at the path stored in the virtual environment
+:check_python
+%VENV_PATH%\Scripts\python.exe --version >nul 2>&1
+if %errorlevel% neq 0 (
+    echo Python not found at the path stored in the virtual environment.
+    echo Recreating virtual environment...
+    rmdir /s /q %VENV_PATH%
     python -m venv %VENV_PATH%
 )
 
