@@ -44,11 +44,16 @@ echo Activating virtual environment...
 call %ACTIVATE_PATH%
 
 echo Checking the requirements...
-for /f "delims=" %%i in (%requirementsFile%) do (
-    pip freeze | findstr /c:%%i > nul
-    if errorlevel 1 (
-        echo Installing package: %%i
-        pip install %%i --upgrade --quiet
+:: Get the list of installed packages using pip freeze
+for /f "tokens=1,* delims==" %%i in ('pip freeze') do (
+    set installed[%%i]=%%j
+)
+
+:: Compare with the requirements from the requirements.txt file
+for /f "tokens=1,* delims==" %%i in (%requirementsFile%) do (
+    if not "!installed[%%i]!"=="%%j" (
+        echo Installing package: %%i==%%j
+        pip install %%i==%%j --upgrade --quiet 
     )
 )
 
