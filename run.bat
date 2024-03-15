@@ -41,7 +41,7 @@ if %errorlevel% neq 0 (
 )
 
 echo Activating virtual environment...
-call %ACTIVATE_PATH%s
+call %ACTIVATE_PATH%
 if errorlevel 1 (
 	echo Failed to activate virtual environment.
 	echo Recreating virtual environment...
