@@ -41,7 +41,15 @@ if %errorlevel% neq 0 (
 )
 
 echo Activating virtual environment...
-call %ACTIVATE_PATH%
+call %ACTIVATE_PATH%s
+if errorlevel 1 (
+    echo Failed to activate virtual environment.
+	echo Recreating virtual environment...
+    rmdir /s /q %VENV_PATH%
+    python -m venv %VENV_PATH%
+	echo Activating virtual environment...
+	call %ACTIVATE_PATH%
+)
 
 echo Checking the requirements...
 :: Get the list of installed packages using pip freeze
