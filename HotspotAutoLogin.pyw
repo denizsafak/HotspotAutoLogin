@@ -240,7 +240,7 @@ def is_internet_available():
         # -n is the number of pings
         # -l is the size of the packet
         # -w is the timeout in seconds
-        subprocess.run(['ping', '8.8.8.8', '-n', '3', '-l', '32', '-w', '3'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, creationflags=subprocess.CREATE_NO_WINDOW)
+        subprocess.run(['ping', '8.8.8.8', '-n', '3', '-l', '32', '-w', '20'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, creationflags=subprocess.CREATE_NO_WINDOW)
         return True
     except subprocess.CalledProcessError:
         return False
@@ -279,7 +279,7 @@ def exit_application(icon, item):
     os._exit(0)
 
 # Queue to store log messages
-log_messages = deque(maxlen=30)
+log_messages = deque(maxlen=15)
 log_dialog = None
 log_text = None
 log_dialog_open = False
@@ -374,10 +374,12 @@ def create_system_tray_icon():
 # Function to check network status
 running = True
 errorcount = 0
+request_success = False
+request_errorcount = 0
 sleepcount = check_every_second
 connected_ssid_lower = None
 def check_network_status():
-    global running, errorcount, sleepcount, connected_ssid_lower, ssid, response
+    global running, errorcount, sleepcount, connected_ssid_lower, ssid, response, request_success, request_errorcount
     while running and errorcount < 10:
         connected_ssid = get_connected_network()
         if (connected_ssid):
@@ -388,8 +390,15 @@ def check_network_status():
                 message = "Connected to {} and internet connection is available. Checking again in {} seconds...".format(connected_ssid, str(sleepcount))
                 errorcount = 0
                 add_to_log(message)
+            elif request_success and request_errorcount < 3:
+                # If the request was successful but there is still no internet connection, wait for a few seconds and try again
+                sleepcount = 60
+                request_errorcount += 1
+                message = "Even the request was successful, there is still no internet connection. There might be a problem with your network. If you are using a VPN, please check your VPN connection. Giving it some time and checking again in {} seconds... (Request Again: {}/3)".format(str(sleepcount), str(request_errorcount))
+                add_to_log(message)
+                save_to_file(message)
             else:
-                sleepcount = 1
+                sleepcount = 3
                 message = "Connected to {} but internet is down. Sending the request...".format(connected_ssid)
                 add_to_log(message)
                 save_to_file(message)
@@ -400,13 +409,16 @@ def check_network_status():
                     response = send_request()
                     if response.ok:
                         errorcount = 0
-                        sleepcount = 20
+                        sleepcount = 10
+                        request_success = True
+                        request_errorcount = 0
                         message = "Request was successful. Checking the internet connection in {} seconds...".format(str(sleepcount))
                         add_to_log(message)
                         save_to_file(message)
                 except requests.exceptions.RequestException as e:
                     errorcount += 1
                     sleepcount = 1
+                    request_success = False
                     if isinstance(e, requests.exceptions.HTTPError):
                         # Handle HTTP errors with different messages for different status codes
                         status_code = e.response.status_code
@@ -437,9 +449,9 @@ def check_network_status():
                             subprocess.check_output(['ipconfig', '/release', "Ethernet"], shell=True, text=True)
                             time.sleep(5)
                             subprocess.check_output(['ipconfig', '/renew', "Ethernet"], shell=True, text=True)
-                            time.sleep(2)
                             message = "Connected to Ethernet. Running the script again..."
                             add_to_log(message)
+                            time.sleep(5)
                         except Exception as e:
                             message += "\nFailed to reconnect to Ethernet: {}".format(e)
                             add_to_log(message)
@@ -452,9 +464,9 @@ def check_network_status():
                             subprocess.check_output(['netsh', 'wlan', 'disconnect', 'interface=' + "Wi-Fi"], startupinfo=startupinfo).decode("utf-8")
                             time.sleep(5)
                             subprocess.check_output(['netsh', 'wlan', 'connect', 'name=' + ssid], startupinfo=startupinfo).decode("utf-8")
-                            time.sleep(2)
                             message = "Connected to {}. Running the script again...".format(ssid)
                             add_to_log(message)
+                            time.sleep(5)
                         except Exception as e:
                             message += "\nFailed to reconnect to {}: {}".format(ssid, e)
                             add_to_log(message)
@@ -479,13 +491,10 @@ if __name__ == '__main__':
     # Create a thread for the system tray icon
     tray_thread = threading.Thread(target=create_system_tray_icon)
     tray_thread.start()
-
     # Open Log Messages at startup
     open_log_messages_startup = threading.Thread(target=show_log_dialog)
     open_log_messages_startup.start()
-
     # Start the network status checking in the main thread
     check_network_status()
-
     # Wait for all threads to finish
     tray_thread.join()
