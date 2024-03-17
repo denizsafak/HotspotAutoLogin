@@ -31,28 +31,46 @@ IF NOT EXIST %VENV_PATH% (
 )
 
 :: Check if Python exists at the path stored in the virtual environment
+set counut_python=0
 :check_python
 %VENV_PATH%\Scripts\python.exe --version >nul 2>&1
 if %errorlevel% neq 0 (
+	set /a count_python+=1
 	echo Python not found at the path stored in the virtual environment.
 	echo Recreating virtual environment...
 	rmdir /s /q %VENV_PATH%
 	python -m venv %VENV_PATH%
+	if !count_python! lss 3 (
+		goto check_python
+	) else (
+		echo Something went wrong. Please try again.
+		pause
+		exit /b
+	)
 )
 
+:: Activate the virtual environment
+set count_activate=0
+:activate
 echo Activating virtual environment...
 call %ACTIVATE_PATH%
 if errorlevel 1 (
+	set /a count_activate+=1
 	echo Failed to activate virtual environment.
 	echo Recreating virtual environment...
 	rmdir /s /q %VENV_PATH%
 	python -m venv %VENV_PATH%
-	echo Activating virtual environment...
-	call %ACTIVATE_PATH%
+	if !count_activate! lss 3 (
+		goto activate
+	) else (
+		echo Failed to activate virtual environment. Please try again.
+		pause
+		exit /b
+	)
 )
 
-echo Checking the requirements...
 :: Get the list of installed packages using pip freeze
+echo Checking the requirements...
 for /f "tokens=1,* delims==" %%i in ('pip freeze') do (
 	set installed[%%i]=%%j
 )
@@ -61,9 +79,21 @@ for /f "tokens=1,* delims==" %%i in ('pip freeze') do (
 for /f "tokens=1,* delims==" %%i in (%requirementsFile%) do (
 	if not "!installed[%%i]!"=="%%j" (
 		echo Installing package: %%i==%%j
-		pip install %%i==%%j --upgrade --quiet 
+		pip install %%i==%%j --upgrade --quiet
+		if errorlevel 1 (
+			echo Failed to install %%i==%%j. Please check your internet connection and try again.
+			pause
+			exit /b
+		)
 	)
 )
 
+:: Run the program
 echo Starting %NAME%...
 start /B "" "%VENV_PATH%/Scripts/pythonw.exe" %RUN%
+if errorlevel 1 (
+	echo Failed to start %NAME%. Please try again.
+	pause
+	exit /b
+)
+exit /b
