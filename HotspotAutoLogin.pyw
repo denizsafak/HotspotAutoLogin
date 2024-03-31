@@ -466,7 +466,7 @@ def check_network_status():
                         else:
                             message = "Request failed with HTTP error ({}). Trying to reconnect to the network... (Errors: {}/10)".format(status_code, errorcount)
                     else:
-                        message = "Request failed with error:{}. If you are usşng a VPN, please disable it for now. Sometimes 'Kill Switch' feature cause this error. Trying to reconnect to the network... (Errors: {}/10)".format(e, errorcount)
+                        message = "Request failed with error: {}. If you are usşng a VPN, please disable it for now. Sometimes 'Kill Switch' feature cause this error. Trying to reconnect to the network... (Errors: {}/10)".format(e, errorcount)
                     add_to_log(message)
                     save_to_file(message)
                     time.sleep(sleepcount)
@@ -518,13 +518,13 @@ def check_network_status():
                         wifi_enabled = True
                         break
             if connected_ssid == "Ethernet":
-                sleepcount = 60
+                sleepcount = 30
                 message = "If you want to connect to {}, please unplug your ethernet cable or disconnect from {}. Checking again in {} seconds...".format(expected_ssid, connected_ssid, str(sleepcount))
                 errorcount = 0
                 add_to_log(message)
             elif expected_ssid == "Ethernet":
-                sleepcount = 60
-                message = "You need to be connected to Ethernet. Please plug in your ethernet cable. Checking again in {} seconds...".format(str(sleepcount))
+                sleepcount = 30
+                message = "Looks like your ethernet cable is not plugged in. Please plug in your ethernet cable. Checking again in {} seconds...".format(str(sleepcount))
                 errorcount = 0
                 add_to_log(message)
             elif wifi_enabled:
@@ -540,12 +540,14 @@ def check_network_status():
                     result = subprocess.run(['netsh', 'wlan', 'connect', 'name=' + expected_ssid], capture_output=True, text=True, startupinfo=startupinfo)
                     if result.returncode != 0:
                         if result.returncode == 1:
-                            sleepcount = 60
-                            raise ValueError("Could not find a Wi-Fi network with SSID: {}. Checking again in {} seconds...".format(expected_ssid, str(sleepcount)))
+                            sleepcount = 20
+                            message = "Could not find a Wi-Fi network with SSID: {}. If your Wi-Fi is disabled, please enable it. Checking again in {} seconds...".format(expected_ssid, str(sleepcount))
+                            add_to_log(message)
                         else:
                             raise subprocess.CalledProcessError(result.returncode, result.args, result.stderr)
-                    message = "Connected to {}. Running the script again in {} seconds...".format(expected_ssid, str(sleepcount))
-                    add_to_log(message)
+                    else:
+                        message = "Connected to {}. Running the script again in {} seconds...".format(expected_ssid, str(sleepcount))
+                        add_to_log(message)
                 except (subprocess.CalledProcessError, ValueError) as e:
                     errorcount += 1
                     sleepcount = 15
