@@ -259,7 +259,6 @@ def get_connected_network():
     try:
         startupinfo = subprocess.STARTUPINFO()
         startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-        
         # Check if connected to Ethernet
         ethernet_output = subprocess.check_output(["netsh", "interface", "show", "interface"], startupinfo=startupinfo).decode("utf-8")
         ethernet_lines = ethernet_output.split("\n")
@@ -267,7 +266,6 @@ def get_connected_network():
             if "Connected" in line:
                 if "Ethernet" in line:
                     return "Ethernet"
-
         # If not connected to Ethernet, check Wi-Fi SSID
         wifi_output = subprocess.check_output(["netsh", "wlan", "show", "interfaces"], startupinfo=startupinfo).decode("utf-8")
         wifi_lines = wifi_output.split("\n")
@@ -278,6 +276,21 @@ def get_connected_network():
                 break
         if wifi_ssid is not None:
             return wifi_ssid
+        else:
+            return False
+    except subprocess.CalledProcessError:
+        return False
+    
+# Is connected to wifi
+def is_connected_to_wifi():
+    try:
+        startupinfo = subprocess.STARTUPINFO()
+        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        wifi_output = subprocess.check_output(["netsh", "wlan", "show", "interfaces"], startupinfo=startupinfo).decode("utf-8")
+        wifi_lines = wifi_output.split("\n")
+        for line in wifi_lines:
+            if "SSID" in line:
+                return True
         else:
             return False
     except subprocess.CalledProcessError:
@@ -416,6 +429,13 @@ def check_network_status():
         if (connected_ssid):
             connected_ssid_lower = connected_ssid.lower()
         if (connected_ssid) and ((connected_ssid_lower == expected_ssid_lower)):
+            if is_connected_to_wifi() and (connected_ssid == "Ethernet" and expected_ssid == "Ethernet"):
+                message = "You are both connected to Wi-Fi and Ethernet. Disconnecting from Wi-Fi and continuing with Ethernet..."
+                add_to_log(message)
+                startupinfo = subprocess.STARTUPINFO()
+                startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+                subprocess.check_output(['netsh', 'wlan', 'disconnect', 'interface=' + "Wi-Fi"], startupinfo=startupinfo).decode("utf-8")
+                time.sleep(5)
             if (is_internet_available()):
                 sleepcount = check_every_second
                 request_success = False
