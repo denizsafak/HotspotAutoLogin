@@ -522,6 +522,11 @@ def check_network_status():
                 message = "If you want to connect to {}, please unplug your ethernet cable or disconnect from {}. Checking again in {} seconds...".format(expected_ssid, connected_ssid, str(sleepcount))
                 errorcount = 0
                 add_to_log(message)
+            elif expected_ssid == "Ethernet":
+                sleepcount = 60
+                message = "You need to be connected to Ethernet. Please plug in your ethernet cable. Checking again in {} seconds...".format(str(sleepcount))
+                errorcount = 0
+                add_to_log(message)
             elif wifi_enabled:
                 if (connected_ssid):
                     sleepcount = 10
