@@ -16,6 +16,11 @@ dns.resolver.default_resolver = dns.resolver.Resolver()
 from urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
+# Program Information
+program_name = "HotspotAutoLogin"
+version = "v1.80"
+github_link = "https://github.com/denizsafak/HotspotAutoLogin"
+
 # Function to center a window on the screen
 def center_window(window, width, height):
     screen_width = window.winfo_screenwidth()
@@ -84,21 +89,18 @@ with open("config.json", "r") as f:
 
 # Get the list of profiles
 profiles = config.get("profiles", [])
-
 # Create the main window
 root = tk.Tk()
-root.title("Profile Selection")
-
+root.title(f"Profile Selection - {program_name} {version}")
+root.iconbitmap("icon.ico")
 # Set a maximum size for the window
 width = 850
 height = 300
 root.minsize(width, height)  # Adjust the values as needed
 center_window(root, width, height)
-
 # Create a frame for listing profiles
 profiles_frame = tk.Frame(root)
 profiles_frame.pack(side=tk.LEFT, fill=tk.Y, padx=10, pady=10)
-
 # Create a listbox to display available profiles
 listbox = tk.Listbox(profiles_frame, selectmode=tk.SINGLE)
 listbox.pack(side=tk.LEFT, fill=tk.Y)
@@ -109,35 +111,27 @@ for profile in profiles:
 # Create a vertical scrollbar for the listbox
 scrollbar = tk.Scrollbar(profiles_frame, orient=tk.VERTICAL)
 scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-
 # Link the listbox and scrollbar
 listbox.config(yscrollcommand=scrollbar.set)
 scrollbar.config(command=listbox.yview)
-
 # Bind the listbox selection event to update and refresh the profile details
 listbox.bind('<<ListboxSelect>>', lambda event: (update_profile_details(event), refresh_profile_details()))
 listbox.bind('<Return>', run_profile)  # Run the selected profile when the Enter key is pressed
-
 # Create a frame for displaying profile details
 details_frame = tk.Frame(root)
 details_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=10, pady=10)
-
 # Create a frame for the profile name and the Refresh button
 profile_name_frame = tk.Frame(details_frame)
 profile_name_frame.pack(fill="x", pady=(0, 5))
-
 # Create the label for the selected profile name
 profile_name = tk.Label(profile_name_frame, text="Selected Profile: ", anchor="w")
 profile_name.pack(side=tk.LEFT)
-
 # Create a Text widget for displaying profile details with a fixed height and scrollbars
 profile_details = Text(details_frame, wrap=tk.WORD, height=10, state=tk.DISABLED, exportselection=False)
 profile_details.pack(fill="both", expand=True)
-
 # Create a vertical scrollbar for the profile details Text widget
 profile_scrollbar = Scrollbar(profile_details, command=profile_details.yview)
 profile_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-
 # Link the profile details Text widget and scrollbar
 profile_details.config(yscrollcommand=profile_scrollbar.set)
 
@@ -163,6 +157,22 @@ refresh_button = tk.Button(
     borderwidth=2,
 )
 refresh_button.pack(side=tk.RIGHT)
+
+# Create the "Github" button that redirects to github.com
+github_button = tk.Button(
+    profile_name_frame,
+    text="Github",
+    command=lambda: os.startfile(github_link),
+    padx=5,
+    pady=0,
+    fg="white",
+    bg="lightskyblue4",
+    activebackground="lightsteelblue4",
+    activeforeground="white",
+    relief=tk.RAISED,
+    borderwidth=2,
+)
+github_button.pack(side=tk.RIGHT, padx=(0, 5))
 
 # Create the "Config" button
 config_button = tk.Button(
@@ -194,11 +204,10 @@ run_button = tk.Button(
     relief=tk.RAISED,
     borderwidth=2,
 )
-run_button.pack(side=tk.LEFT, fill="x", padx=(2, 0), pady=(10, 0), expand=True)
 
+run_button.pack(side=tk.LEFT, fill="x", padx=(2, 0), pady=(10, 0), expand=True)
 # Configure weights for horizontal stretching
 details_frame.pack_propagate(False)
-
 # Start with no profile selected
 selected_profile = None
 
@@ -224,14 +233,14 @@ if selected_profile:
     else:
         ssid = "Ethernet"
         expected_ssid = ssid
-        expected_ssid_lower = None
+        expected_ssid_lower = expected_ssid.lower()
 
 # Function to send the request
 def send_request():
     session = requests.Session()
     requests.packages.urllib3.util.ssl_.DEFAULT_CIPHERS += 'HIGH:!DH:!aNULL'
-    response = session.post(url, json.dumps(payload), headers=headers, allow_redirects=True, verify=False, timeout=3)
-    response.raise_for_status()  # Check for HTTP errors
+    response = session.post(url, json.dumps(payload), headers=headers, allow_redirects=True, verify=False, timeout=10)
+    response.raise_for_status()
     return response
 
 # Function to check if internet is available
@@ -250,7 +259,16 @@ def get_connected_network():
     try:
         startupinfo = subprocess.STARTUPINFO()
         startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-        # Get Wi-Fi SSID
+        
+        # Check if connected to Ethernet
+        ethernet_output = subprocess.check_output(["netsh", "interface", "show", "interface"], startupinfo=startupinfo).decode("utf-8")
+        ethernet_lines = ethernet_output.split("\n")
+        for line in ethernet_lines:
+            if "Connected" in line:
+                if "Ethernet" in line:
+                    return "Ethernet"
+
+        # If not connected to Ethernet, check Wi-Fi SSID
         wifi_output = subprocess.check_output(["netsh", "wlan", "show", "interfaces"], startupinfo=startupinfo).decode("utf-8")
         wifi_lines = wifi_output.split("\n")
         wifi_ssid = None
@@ -260,14 +278,6 @@ def get_connected_network():
                 break
         if wifi_ssid is not None:
             return wifi_ssid
-        elif wifi_ssid is None:
-            # Check if connected to Ethernet
-            ethernet_output = subprocess.check_output(["netsh", "interface", "show", "interface"], startupinfo=startupinfo).decode("utf-8")
-            ethernet_lines = ethernet_output.split("\n")
-            for line in ethernet_lines:
-                if "Connected" in line:
-                    if "Ethernet" in line:
-                        return "Ethernet"
         else:
             return False
     except subprocess.CalledProcessError:
@@ -283,7 +293,6 @@ log_messages = deque(maxlen=15)
 log_dialog = None
 log_text = None
 log_dialog_open = False
-
 # Get the dialog geometry from the config file
 width = dialog_geometry["width"]
 height = dialog_geometry["height"]
@@ -298,7 +307,7 @@ def update_window_geometry(event):
 
 # Function to show the log dialog with the currently selected profile name
 def show_log_dialog():
-    global log_dialog, log_text, log_dialog_open
+    global log_dialog, log_text, log_dialog_open, successful_logins_label
     if not log_dialog_open:
         log_dialog_open = True
         if log_dialog:
@@ -313,6 +322,10 @@ def show_log_dialog():
             log_frame.pack(fill=tk.BOTH, expand=True)
             log_text = tk.Text(log_frame, wrap=tk.WORD)
             log_text.pack(fill=tk.BOTH, expand=True)
+            log_dialog.minsize(200, 120)
+            # Create label for successful logins count
+            successful_logins_label = tk.Label(log_dialog, text=f"Successful Logins: {successful_logins_count}", anchor="w", padx=5)
+            successful_logins_label.place(x=0, rely=1.0, anchor=tk.SW, bordermode=tk.OUTSIDE)
             update_log()
             log_dialog.protocol("WM_DELETE_WINDOW", hide_log_dialog)
             center_window(log_dialog, width, height)
@@ -342,13 +355,31 @@ def update_log():
         for message in get_last_log_messages():
             log_text.insert(tk.END, message + "\n")
 
+# Add a global variable to keep track of successful logins count
+successful_logins_count = 0
+successful_logins_label = None
+
 # Function to add a message to the log
 def add_to_log(message):
-    global log_messages
+    global log_messages, successful_logins_count
     now = datetime.now()
     timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
     log_messages.append(f"({timestamp}) {message}")
-    update_log()
+    update_log()  # Update the log window
+
+# Function to update the log
+def update_log():
+    if log_text:
+        log_text.delete(1.0, tk.END)
+        for message in get_last_log_messages():
+            log_text.insert(tk.END, message + "\n")
+        update_successful_logins_count()  # Update the successful logins count
+
+# Function to update the successful logins count label
+def update_successful_logins_count():
+    if log_dialog:
+        if successful_logins_label:
+            successful_logins_label.config(text=f"Successful Logins: {successful_logins_count}")
 
 # Function to add a message to the log file (txt)
 def save_to_file(message):
@@ -379,14 +410,16 @@ request_errorcount = 0
 sleepcount = check_every_second
 connected_ssid_lower = None
 def check_network_status():
-    global running, errorcount, sleepcount, connected_ssid_lower, ssid, response, request_success, request_errorcount
+    global running, errorcount, sleepcount, connected_ssid_lower, ssid, response, request_success, request_errorcount, successful_logins_count
     while running and errorcount < 10:
         connected_ssid = get_connected_network()
         if (connected_ssid):
             connected_ssid_lower = connected_ssid.lower()
-        if (connected_ssid) and ((connected_ssid_lower == expected_ssid_lower) or (connected_ssid == "Ethernet")):
+        if (connected_ssid) and ((connected_ssid_lower == expected_ssid_lower)):
             if (is_internet_available()):
                 sleepcount = check_every_second
+                request_success = False
+                request_errorcount = 0
                 message = "Connected to {} and internet connection is available. Checking again in {} seconds...".format(connected_ssid, str(sleepcount))
                 errorcount = 0
                 add_to_log(message)
@@ -398,20 +431,20 @@ def check_network_status():
                 add_to_log(message)
                 save_to_file(message)
             else:
-                sleepcount = 3
-                message = "Connected to {} but internet is down. Sending the request...".format(connected_ssid)
+                sleepcount = 5
+                message = "Connected to {} but internet is down. Sending the request in {} seconds...".format(connected_ssid, str(sleepcount))
                 add_to_log(message)
                 save_to_file(message)
                 time.sleep(sleepcount)
-                # Send the request and handle potential errors
                 try:                        
                     # Function to send request
                     response = send_request()
                     if response.ok:
                         errorcount = 0
-                        sleepcount = 10
+                        sleepcount = 15
                         request_success = True
                         request_errorcount = 0
+                        successful_logins_count += 1
                         message = "Request was successful. Checking the internet connection in {} seconds...".format(str(sleepcount))
                         add_to_log(message)
                         save_to_file(message)
@@ -433,8 +466,7 @@ def check_network_status():
                         else:
                             message = "Request failed with HTTP error ({}). Trying to reconnect to the network... (Errors: {}/10)".format(status_code, errorcount)
                     else:
-                        message = "Request failed with error:{}. Trying to reconnect to the network... (Errors: {}/10)".format(e, errorcount)
-                    # Print the response message
+                        message = "Request failed with error:{}. If you are usşng a VPN, please disable it for now. Sometimes 'Kill Switch' feature cause this error. Trying to reconnect to the network... (Errors: {}/10)".format(e, errorcount)
                     add_to_log(message)
                     save_to_file(message)
                     time.sleep(sleepcount)
@@ -453,7 +485,8 @@ def check_network_status():
                             add_to_log(message)
                             time.sleep(5)
                         except Exception as e:
-                            message += "\nFailed to reconnect to Ethernet: {}".format(e)
+                            errorcount += 1
+                            message = "Failed to reconnect to Ethernet: {} (Errors: {}/10)".format(e, errorcount)
                             add_to_log(message)
                             save_to_file(message)
                     else:
@@ -466,20 +499,70 @@ def check_network_status():
                             subprocess.check_output(['netsh', 'wlan', 'connect', 'name=' + ssid], startupinfo=startupinfo).decode("utf-8")
                             message = "Connected to {}. Running the script again...".format(ssid)
                             add_to_log(message)
-                            time.sleep(5)
+                            time.sleep(8)
                         except Exception as e:
-                            message += "\nFailed to reconnect to {}: {}".format(ssid, e)
+                            errorcount += 1 
+                            message = "Failed to reconnect to {}: {} (Errors: {}/10)".format(ssid, e, errorcount)
                             add_to_log(message)
                             save_to_file(message)
                     continue
         else:
-            sleepcount = 10  # Sleep ... seconds before trying again
-            message = "Not connected to {} or any other network. Checking again in {} seconds...".format(expected_ssid, str(sleepcount))
-            add_to_log(message)
-            save_to_file(message)
-
+            startupinfo = subprocess.STARTUPINFO()
+            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            wifi_output = subprocess.check_output(["netsh", "interface", "show", "interface"], startupinfo=startupinfo).decode("utf-8")
+            wifi_lines = wifi_output.split("\n")
+            wifi_enabled = False
+            for line in wifi_lines:
+                if "Wi-Fi" in line:
+                    if "Enabled" in line:
+                        wifi_enabled = True
+                        break
+            if connected_ssid == "Ethernet":
+                sleepcount = 60
+                message = "If you want to connect to {}, please unplug your ethernet cable or disconnect from {}. Checking again in {} seconds...".format(expected_ssid, connected_ssid, str(sleepcount))
+                errorcount = 0
+                add_to_log(message)
+            elif wifi_enabled:
+                if (connected_ssid):
+                    sleepcount = 10
+                    message = "You are connected to {}, but you need to be connected to {}. Trying to connect {}...".format(connected_ssid, expected_ssid, expected_ssid)
+                    add_to_log(message)
+                else:
+                    sleepcount = 10
+                    message = "You are not connected to {}. Trying to connect {}...".format(expected_ssid, expected_ssid)
+                    add_to_log(message) 
+                try:
+                    result = subprocess.run(['netsh', 'wlan', 'connect', 'name=' + expected_ssid], capture_output=True, text=True, startupinfo=startupinfo)
+                    if result.returncode != 0:
+                        if result.returncode == 1:
+                            sleepcount = 60
+                            raise ValueError("Could not find a Wi-Fi network with SSID: {}. Checking again in {} seconds...".format(expected_ssid, str(sleepcount)))
+                        else:
+                            raise subprocess.CalledProcessError(result.returncode, result.args, result.stderr)
+                    message = "Connected to {}. Running the script again in {} seconds...".format(expected_ssid, str(sleepcount))
+                    add_to_log(message)
+                except (subprocess.CalledProcessError, ValueError) as e:
+                    errorcount += 1
+                    sleepcount = 15
+                    if isinstance(e, subprocess.CalledProcessError):
+                        message = "Failed to connect to {}: {}. Trying again in {} seconds... (Errors:{}/10)".format(expected_ssid, e, str(sleepcount), errorcount)
+                    else:
+                        message = str(e) + ". Trying again in {} seconds... (Errors:{}/10)".format(str(sleepcount), errorcount)
+                    add_to_log(message)
+                    save_to_file(message)
+            elif wifi_enabled == False:
+                sleepcount = 30
+                errorcount += 1
+                message = "You are not connected to Ethernet and your Wi-Fi is disabled. Please enable your Wi-Fi or plug in your ethernet cable. Checking again in {} seconds... (Errors: {}/10)".format(str(sleepcount), errorcount)
+                add_to_log(message)
+                save_to_file(message)
+            else:
+                sleepcount = 30
+                errorcount += 1
+                message = "Something went wrong. Please check your Wi-Fi or Ethernet connection. Checking again in {} seconds... (Errors: {}/10)".format(str(sleepcount), errorcount)
+                save_to_file(message)
+                add_to_log(message)
         time.sleep(sleepcount)  # Sleep ... seconds before trying again
-
     message = "Maximum error count reached. Exiting in 5 seconds..."
     add_to_log(message)
     save_to_file(message)
