@@ -1,0 +1,38 @@
+{
+    "profiles": [
+        {
+            "name": "My School Wi-Fi",
+            "ssid": "SCHOOL_WIFI_5G",
+            "url": "https://connect.schoolwifi.com/api/portal/dynamic/authenticate",
+            "payload": {
+                "username": "85795013@myschool.com",
+                "password": "123455678"
+            },
+            "headers": {
+                "Content-Type": "application/json;charset=UTF-8",
+                "Connection": "keep-alive",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
+            },
+            "check_every_second": 600,
+            "dialog_geometry": {
+                "width": 1024,
+                "height": 500
+            }
+        },
+        {
+            "name": "My School ETHERNET",
+            "url": "http://10.3.41.15:8002/index.php?zone=dormnet",
+            "payload": "&auth_user=85795013%40myschool.com&auth_pass=123455678&redirurl=&accept=Login",
+            "headers": {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Connection": "keep-alive",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36 Edg/118.0.2088.69"
+            },
+            "check_every_second": 600,
+            "dialog_geometry": {
+                "width": 1024,
+                "height": 500
+            }
+        }
+    ]
+}
