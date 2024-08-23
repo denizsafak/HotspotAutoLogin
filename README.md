@@ -13,7 +13,7 @@ HotspotAutoLogin is a script that designed to automate the login process for Wi-
 ### Option 1: Executable Script
 - If you don't want to install Python, you can download the precompiled executable version from the Releases section.
 [Download the Latest Executable (.exe) Release](https://github.com/denizsafak/HotspotAutoLogin/releases/latest)
-- Double-click on HotspotAutoLogin.exe to launch the application. The wallpaper information display will appear on your screen.
+- Double-click on HotspotAutoLogin.exe to launch the application.
 
 ### Option 2: Run with Python
 - Clone or download the repository to your local machine.
