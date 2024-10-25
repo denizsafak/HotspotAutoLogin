@@ -16,9 +16,11 @@ dns.resolver.default_resolver = dns.resolver.Resolver()
 from urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
+################################# REMOVE THIS BEFORE USING PYINSTALLER #################################
 # Change the current working directory to the script's directory
 script_dir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(script_dir)
+################################# REMOVE THIS BEFORE USING PYINSTALLER #################################
 
 # Program Information
 program_name = "HotspotAutoLogin"
