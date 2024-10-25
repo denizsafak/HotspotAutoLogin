@@ -22,7 +22,7 @@ os.chdir(script_dir)
 
 # Program Information
 program_name = "HotspotAutoLogin"
-version = "v1.82"
+version = "v1.83"
 github_link = "https://github.com/denizsafak/HotspotAutoLogin"
 
 # Function to center a window on the screen
@@ -227,6 +227,7 @@ root.mainloop()
 if selected_profile:
     payload = selected_profile.get('payload')
     url = selected_profile.get('url', "")
+    internet_check_url = selected_profile.get('internet_check_url', "")
     ssid = selected_profile.get('ssid', "")
     check_every_second = selected_profile.get('check_every_second', "")
     dialog_geometry = selected_profile.get('dialog_geometry', "")
@@ -253,7 +254,7 @@ def is_internet_available():
         # -n is the number of pings
         # -l is the size of the packet
         # -w is the timeout in seconds
-        subprocess.run(['ping', '8.8.8.8', '-n', '3', '-l', '32', '-w', '20'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, creationflags=subprocess.CREATE_NO_WINDOW)
+        subprocess.run(['ping', internet_check_url, '-n', '3', '-l', '32', '-w', '20'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, creationflags=subprocess.CREATE_NO_WINDOW)
         return True
     except subprocess.CalledProcessError:
         return False
