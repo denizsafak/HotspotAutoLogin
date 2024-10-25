@@ -4,6 +4,7 @@
             "name": "NAME_OF_YOUR_PROFILE (WI-FI EXAMPLE)",
             "ssid": "SSID_OF_YOUR_WIFI",
             "url": "PAYLOAD_URL_HERE",
+            "internet_check_url": "8.8.8.8",
             "payload": {
                 "username": "PLEASE WRITE YOUR OWN PAYLOAD VALUES HERE. THIS IS AN EXAMPLE",
                 "password": "PLEASE WRITE YOUR OWN PAYLOAD VALUES HERE. THIS IS AN EXAMPLE"
@@ -22,6 +23,7 @@
         {
             "name": "NAME_OF_YOUR_PROFILE (ETHERNET EXAMPLE)",
             "url": "PAYLOAD_URL_HERE",
+            "internet_check_url": "8.8.8.8",
             "payload": "&auth_user=XXXX%40gmail.com&auth_pass=xxx&redirurl=&accept=Login",
             "headers": {
                 "Content-Type": "application/x-www-form-urlencoded",
