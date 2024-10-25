@@ -45,7 +45,7 @@ HotspotAutoLogin is a script that designed to automate the login process for Wi-
 
 `"url":` Enter the "Request URL" in the "Headers" tab here.
 
-`"internet_check_url":` Adress to check the internet connection. If you can access "8.8.8.8" without logging into your network, please change this.
+`"internet_check_url":` URL to check your internet connection. Program will try to access this address to check if you have internet connection. If 8.8.8.8 is accessible **before** you log into your network, change this.**
 
 ![Example Request.](/examples/Request.png)
 
