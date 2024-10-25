@@ -1,4 +1,4 @@
 urllib3==1.26.18
-requests==2.31.0
+requests==2.32.3
 pystray==0.19.5
-dnspython==2.6.1
+dnspython==2.7.0
