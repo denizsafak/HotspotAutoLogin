@@ -17,7 +17,6 @@ HotspotAutoLogin is a script that designed to automate the login process for Wi-
 
 ### Option 2: Run with Python
 - Clone or download the repository to your local machine.
-- Install Python to your computer.
 - Run "run.bat" file.
 
 ## `Features`
