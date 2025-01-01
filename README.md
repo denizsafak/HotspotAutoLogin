@@ -16,7 +16,8 @@ HotspotAutoLogin is a script that designed to automate the login process for Wi-
 - Double-click on HotspotAutoLogin.exe to launch the application.
 
 ### Option 2: Run with Python
-- Clone or download the repository to your local machine.
+- Clone or [download the repository](https://github.com/denizsafak/HotspotAutoLogin/archive/refs/heads/main.zip) to your local machine.
+- Extract from zip.
 - Run "run.bat" file.
 
 ## `Features`
@@ -31,6 +32,8 @@ HotspotAutoLogin is a script that designed to automate the login process for Wi-
 - You can view the log of the script's actions by clicking the "Show Log" option in the system tray menu.
 
 ## `How to Configure the config.json?`
+> [!TIP]  
+> I recebtly, added "Add new" button to the program, so you can achieve the same thing without needing to edit the config.json.
 
 ![How to Animation.](/examples/howto.gif)
 
@@ -61,8 +64,8 @@ HotspotAutoLogin is a script that designed to automate the login process for Wi-
 {
     "profiles": [
         {
-            "name": "My School Wi-Fi",
-            "ssid": "SCHOOL_WIFI_5G",
+            "name": "Example Wi-Fi",
+            "ssid": "EXAMPLE_WIFI_5G",
             "url": "https://connect.schoolwifi.com/api/portal/dynamic/authenticate",
             "internet_check_url": "8.8.8.8",
             "payload": {
@@ -81,7 +84,7 @@ HotspotAutoLogin is a script that designed to automate the login process for Wi-
             }
         },
         {
-            "name": "My School ETHERNET",
+            "name": "Example ETHERNET",
             "url": "http://10.3.41.15:8002/index.php?zone=dormnet",
             "payload": "&auth_user=85795013%40myschool.com&auth_pass=123455678&redirurl=&accept=Login",
             "internet_check_url": "8.8.8.8",
@@ -101,13 +104,8 @@ HotspotAutoLogin is a script that designed to automate the login process for Wi-
 ```
 
 
-
 > [!CAUTION]
-> If you get:
-> 
-> ```Could not find a Wi-Fi network with SSID: {}. If your Wi-Fi is disabled, please enable it. Checking again in {} seconds...```
-> 
-> error, **even with the correct SSID**, it’s likely due to recent Windows updates that restrict third-party apps from accessing Wi-Fi names unless location services are enabled. To fix this, turn on location services in your settings. For more details, check the article from 04/02/2024 [Changes to API behavior for Wi-Fi access and location](https://learn.microsoft.com/en-us/windows/win32/nativewifi/wi-fi-access-location-changes).
+> Recent Windows updates restricts third-party apps from accessing Wi-Fi names unless location services are enabled. To fix this, turn on location services in your settings. For more details, check the article from 04/02/2024 [Changes to API behavior for Wi-Fi access and location](https://learn.microsoft.com/en-us/windows/win32/nativewifi/wi-fi-access-location-changes).
 
 > [!NOTE]
 > - The script relies on the assumption that the web portal uses basic authentication. If the portal uses a more complex login mechanism, additional adjustments may be necessary.
