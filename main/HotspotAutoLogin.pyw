@@ -355,7 +355,7 @@ def add_new_profile():
     "Content-Type": "application/x-www-form-urlencoded",
     "Connection": "keep-alive",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
-    }""")
+}""")
     # check_every_second
     check_frame = tk.Frame(container)
     check_frame.pack(fill="x", pady=5)
@@ -625,12 +625,29 @@ def send_request():
 # Function to check if internet is available
 def is_internet_available():
     try:
-        #subprocess.run(['ping', internet_check_url, '-n', '3', '-l', '32', '-w', '20'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, creationflags=subprocess.CREATE_NO_WINDOW)
-        socket.create_connection((internet_check_url, 53), timeout=5)
-        return True
-    #except subprocess.CalledProcessError:
-    except OSError:
+        internet_check_url_clean = internet_check_url.replace("http://", "").replace("https://", "")
+        socket.setdefaulttimeout(3)
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        if internet_check_url_clean.replace('.', '').isdigit():
+            address = internet_check_url_clean
+        else:
+            try:
+                address = socket.gethostbyname(internet_check_url_clean)
+            except socket.gaierror:
+                return False
+        if internet_check_url.startswith("https://"):
+            port = 443
+        elif internet_check_url.startswith("http://"):
+            port = 80
+        else:
+            port = 53
+        server_address = (address, port)
+        s.connect(server_address)
+    except OSError as error:
         return False
+    finally:
+        s.close()
+    return True
 
 # Function to get the currently connected SSID using system commands (for Windows)
 def get_connected_network():
