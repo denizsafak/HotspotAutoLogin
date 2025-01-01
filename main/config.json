@@ -1,13 +1,13 @@
 {
     "profiles": [
         {
-            "name": "NAME_OF_YOUR_PROFILE (WI-FI EXAMPLE)",
-            "ssid": "SSID_OF_YOUR_WIFI",
-            "url": "PAYLOAD_URL_HERE",
+            "name": "Example Wi-Fi",
+            "ssid": "EXAMPLE_WIFI_5G",
+            "url": "https://connect.schoolwifi.com/api/portal/dynamic/authenticate",
             "internet_check_url": "8.8.8.8",
             "payload": {
-                "username": "PLEASE WRITE YOUR OWN PAYLOAD VALUES HERE. THIS IS AN EXAMPLE",
-                "password": "PLEASE WRITE YOUR OWN PAYLOAD VALUES HERE. THIS IS AN EXAMPLE"
+                "username": "85795013@myschool.com",
+                "password": "123455678"
             },
             "headers": {
                 "Content-Type": "application/json;charset=UTF-8",
@@ -21,10 +21,10 @@
             }
         },
         {
-            "name": "NAME_OF_YOUR_PROFILE (ETHERNET EXAMPLE)",
-            "url": "PAYLOAD_URL_HERE",
+            "name": "Example ETHERNET",
+            "url": "http://10.3.41.15:8002/index.php?zone=dormnet",
+            "payload": "&auth_user=85795013%40myschool.com&auth_pass=123455678&redirurl=&accept=Login",
             "internet_check_url": "8.8.8.8",
-            "payload": "&auth_user=XXXX%40gmail.com&auth_pass=xxx&redirurl=&accept=Login",
             "headers": {
                 "Content-Type": "application/x-www-form-urlencoded",
                 "Connection": "keep-alive",
