@@ -21,11 +21,7 @@ dns.resolver.default_resolver = dns.resolver.Resolver()
 from urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
-################################# REMOVE THIS BEFORE USING PYINSTALLER #################################
-# Change the current working directory to the script's directory
-script_dir = os.path.dirname(os.path.abspath(__file__))
-os.chdir(script_dir)
-################################# REMOVE THIS BEFORE USING PYINSTALLER #################################
+
 
 # Program Information
 program_name = "HotspotAutoLogin"
@@ -59,12 +55,17 @@ def update_profile_details(event):
         profile_name.config(text=f"Selected Profile: {selected_profile['name']}")
         profile_details.config(state=tk.NORMAL)
         profile_details.delete(1.0, tk.END)
-        # Insert profile details with all variables except "name"WWWW
+        # Insert profile details as JSON with coloring
         profile_details.tag_configure("bold", font=("Courier New", 10, "bold"), foreground="#08872a")
-        for key, value in selected_profile.items():
-            if key != 'name':  # Skip displaying the "name" variable
-                profile_details.insert(tk.END, f"{key}: ", "bold")
-                profile_details.insert(tk.END, f"{value}\n")
+        profile_details.tag_configure("normal", font=("Courier New", 10), foreground="#000000")
+        profile_json = json.dumps({k: v for k, v in selected_profile.items() if k != 'name'}, indent=4)
+        for line in profile_json.splitlines():
+            if ':' in line:
+                key, value = line.split(':', 1)
+                profile_details.insert(tk.END, key + ':', "bold")
+                profile_details.insert(tk.END, value + "\n", "normal")
+            else:
+                profile_details.insert(tk.END, line + "\n", "normal")
         profile_details.config(state=tk.DISABLED)
     else:
         profile_name.config(text="Selected Profile: ")
@@ -122,7 +123,13 @@ listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 def scan_wifi_ssids():
     ssids = []
     try:
-        result = subprocess.run(["netsh", "wlan", "show", "networks"], capture_output=True, text=True, shell=True)
+        result = subprocess.run(
+            ["netsh", "wlan", "show", "networks"],
+            capture_output=True,
+            text=True,
+            shell=True,
+            creationflags=subprocess.CREATE_NO_WINDOW
+        )
         output = result.stdout
         for line in output.splitlines():
             line = line.strip()
@@ -144,7 +151,9 @@ def add_new_profile():
 
     def get_current_connected_ssid():
         try:
-            output = subprocess.check_output(["netsh", "wlan", "show", "interfaces"], text=True)
+            startupinfo = subprocess.STARTUPINFO()
+            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            output = subprocess.check_output(["netsh", "wlan", "show", "interfaces"], text=True, startupinfo=startupinfo)
             match = re.search(r"^\s*SSID\s*:\s*(.+)$", output, re.MULTILINE)
             if match:
                 return match.group(1).strip()
@@ -940,7 +949,13 @@ def check_network_status():
                     message = "You are not connected to {}. Trying to connect {}...".format(expected_ssid, expected_ssid)
                     add_to_log(message, "red") 
                 try:
-                    result = subprocess.run(['netsh', 'wlan', 'connect', 'name=' + expected_ssid], capture_output=True, text=True, startupinfo=startupinfo)
+                    result = subprocess.run(
+                        ['netsh', 'wlan', 'connect', 'name=' + expected_ssid],
+                        capture_output=True,
+                        text=True,
+                        startupinfo=startupinfo,
+                        creationflags=subprocess.CREATE_NO_WINDOW
+                    )
                     if result.returncode != 0:
                         if result.returncode == 1:
                             sleepcount = 20
