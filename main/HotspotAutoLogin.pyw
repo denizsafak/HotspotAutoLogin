@@ -625,30 +625,22 @@ def send_request():
 # Function to check if internet is available
 def is_internet_available():
     try:
-        internet_check_url_clean = internet_check_url.replace("http://", "").replace("https://", "")
-        socket.setdefaulttimeout(3)
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        if internet_check_url_clean.replace('.', '').isdigit():
-            address = internet_check_url_clean
+        parsed = urlparse(internet_check_url)
+        if not parsed.scheme:
+            test_urls = [f"https://{internet_check_url}", f"http://{internet_check_url}"]
         else:
+            test_urls = [internet_check_url]
+        for url in test_urls:
             try:
-                address = socket.gethostbyname(internet_check_url_clean)
-            except socket.gaierror:
+                response = requests.get(url, timeout=5)
+                if response.status_code == 200:
+                    return True
+            except requests.RequestException as e:
                 return False
-        if internet_check_url.startswith("https://"):
-            port = 443
-        elif internet_check_url.startswith("http://"):
-            port = 80
-        else:
-            port = 53
-        server_address = (address, port)
-        s.connect(server_address)
-    except OSError as error:
         return False
-    finally:
-        s.close()
-    return True
-
+    except Exception as e:
+        return False
+    
 # Function to get the currently connected SSID using system commands (for Windows)
 def get_connected_network():
     try:
