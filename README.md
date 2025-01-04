@@ -33,7 +33,7 @@ HotspotAutoLogin is a script that designed to automate the login process for Wi-
 
 ## `How to Configure the config.json?`
 > [!TIP]  
-> I recebtly, added "Add new" button to the program, so you can achieve the same thing without needing to edit the config.json.
+> I recently, added "Add new" button to the program, so you can achieve the same thing without needing to edit the config.json.
 
 ![How to Animation.](/examples/howto.gif)
 
