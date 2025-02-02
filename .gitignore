@@ -1,0 +1,23 @@
+# macOS system files
+.DS_Store
+._*
+Thumbs.db
+Desktop.ini
+
+# Python artifacts
+__pycache__/
+**/__pycache__
+*.py[cod]
+*.so
+*.exe
+*.zip
+*.tar.gz
+
+# Virtual environments
+env/
+venv/
+.env/
+.venv/
+
+# VS Code settings
+.vscode/
